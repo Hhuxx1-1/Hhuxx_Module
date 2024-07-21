@@ -46,7 +46,7 @@ ScriptSupportEvent:registerEvent("Actor.RemoveBuff",function(e)
         --Chat:sendSystemMsg("Restoring Model ");
         Actor:changeCustomModel(e.eventobjid,before[e.eventobjid])
     end    
-end )
+end)
 
 ScriptSupportEvent:registerEvent("Player.AddBuff",function(e) 
      if(e.buffid == 1050)then 
@@ -63,4 +63,4 @@ ScriptSupportEvent:registerEvent("Player.RemoveBuff",function(e)
         --Chat:sendSystemMsg("Restoring Model ");
         Actor:changeCustomModel(e.eventobjid,before[e.eventobjid])
     end    
-end )
+end)
