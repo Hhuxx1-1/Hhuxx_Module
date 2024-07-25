@@ -1,5 +1,5 @@
 -- PLAYER_DAT
-local secretKey = "CODE2024YEAR_Unknown";
+local secretKey = "8qwyadihsn";
 local maxSkillPoint = 9999;
 local SkillPointGainedOnLevelUp = 2;
 local function bxor(a, b)
@@ -52,34 +52,46 @@ end
 -- Decrypt the text
 
 -- local decryptedText = decrypt_text(encryptedText, secretKey)
--- print("Decrypted Text: " .. decryptedText)
+-- --print("Decrypted Text: " .. decryptedText)
 
 PLAYER_DAT = {};
 
 PLAYER_DAT.GET_KEY_VAL = function(oneArguments)
+    --print(" Arguments From Get_Key_Val : ",oneArguments);
     local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
     return key,value
 end
 
-PLAYER_DAT.SAVE_TYPE=function (key)
-    local sum = 0
-    for i = 1, string.len(key) do
-        local byteValue = string.byte(key, i)
-        sum = sum + byteValue
+PLAYER_DAT.SAVE_TYPE=function (key , playerid)
+    local r , t = Valuegroup:getAllGroupItem(18, "PLAYER_DAT", playerid);
+    for i,a in pairs(t) do
+       local decrypts = readcode(a, secretKey);
+       --print("index : ",i ,a," ->" ,decrypts);
+       local key1, value1 = PLAYER_DAT.GET_KEY_VAL(decrypts);
+       --print(key1 , " | ", key);
+       if(key1 == key)then return i, true,a end 
     end
-    return sum
+    --print(r,t);
+    return 1+#t , false;
 end 
 
 PLAYER_DAT.SAVE = function(playerid,Value)
     local key, value = PLAYER_DAT.GET_KEY_VAL(Value);
-    local indes = PLAYER_DAT.SAVE_TYPE(key);
-    local encryptedText = crypt(Value, secretKey);
-    Valuegroup:setValueNoByName(18, "PLAYER_DAT",indes, encryptedText, playerid);
+    local indes,cond,oldText = PLAYER_DAT.SAVE_TYPE(key , playerid);
+    local newText = crypt(Value, secretKey);
+    --print("Saving Data ", indes , " As " , newText)
+    if(cond)then 
+        Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
+    else 
+        Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
+        --Valuegroup:setValueNoByName(18, "PLAYER_DAT",indes, newText, playerid);
+    end 
     if r==0 then return true else return false end
 end
 
 PLAYER_DAT.READ = function(playerid,indexs)
     local r,Value = Valuegroup:getValueNoByName(18, "PLAYER_DAT", indexs, playerid);
+    --print( "Read From Data Index : ",indexs , " is ", r , " and Value is ", Value);
     if(r~=0)then 
         return false; 
     else 
@@ -87,29 +99,6 @@ PLAYER_DAT.READ = function(playerid,indexs)
         return decryptedText
     end 
 end 
-
-PLAYER_DAT.LOAD = function(playerid)
-    local r , DAT = Valuegroup:getAllGroupItem(18, "PLAYER_DAT", playerid);
-    --print("Attempt 1",DAT);
-    for i ,a in pairs(DAT) do 
-        local Read_Data1 = readcode(a,secretKey);
-        -- print("Attempt 2",Read_Data1);
-        local key, value = PLAYER_DAT.GET_KEY_VAL(Read_Data1);
-        -- print("Attempt 3","key = "..key, "value = "..value);
-        local indes = PLAYER_DAT.SAVE_TYPE(key);
-        --print("Attempt 4",indes);
-        local Read_Data2 = PLAYER_DAT.READ(playerid,indes);
-        if(Read_Data1 == Read_Data2)then 
-            local key, value = PLAYER_DAT.GET_KEY_VAL(Read_Data1);
-            local DatType = PLAYER_DAT.TYPE[key];
-            DatType.f(playerid,value);
-        end 
-    end 
-end 
-
-local EXP_to_LEVEL = function(exp)
-    return math.floor(exp/1000);
-end
 
 PLAYER_DAT.TYPE = {
     MAX_HP      =   {
@@ -291,14 +280,13 @@ PLAYER_DAT.TYPE = {
                 local r , v = VarLib2:getPlayerVarByName(playerid, 3,"Currency");
                 if ( r == 0 ) then return v end 
             end 
-    },
-    EXP_LEVEL = {
-            v = "EXP_LEVEL",
+    },EXPERIENCE = {
+            v = "EXPERIENCE",
             f = function(playerid,val) 
-                PLAYER_DAT.SAVE(playerid,"EXP_LEVEL:"..val);
+                PLAYER_DAT.SAVE(playerid,"EXPERIENCE:"..val);
             end, 
             get = function(playerid)
-                local key = PLAYER_DAT.SAVE_TYPE("EXP_LEVEL");
+                local key = PLAYER_DAT.SAVE_TYPE("EXPERIENCE",playerid);
                 local Encrypted_V = PLAYER_DAT.READ(playerid,key);
                 local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
                 return val;
@@ -309,7 +297,7 @@ PLAYER_DAT.TYPE = {
             PLAYER_DAT.SAVE(playerid,"SKILL_POINT:"..val);
             end,
         get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("SKILL_POINT");
+            local key = PLAYER_DAT.SAVE_TYPE("SKILL_POINT",playerid);
             local Encrypted_V = PLAYER_DAT.READ(playerid,key);
             local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
             return val;
@@ -320,7 +308,7 @@ PLAYER_DAT.TYPE = {
             PLAYER_DAT.SAVE(playerid,"SKILL_HP_POINT:"..val);
         end,
         get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("SKILL_HP_POINT");
+            local key = PLAYER_DAT.SAVE_TYPE("SKILL_HP_POINT",playerid);
             local Encrypted_V = PLAYER_DAT.READ(playerid,key);
             local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
             return val;
@@ -331,7 +319,7 @@ PLAYER_DAT.TYPE = {
             PLAYER_DAT.SAVE(playerid,"SKILL_MP_POINT:"..val);
             end,
         get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("SKILL_MP_POINT");
+            local key = PLAYER_DAT.SAVE_TYPE("SKILL_MP_POINT",playerid);
             local Encrypted_V = PLAYER_DAT.READ(playerid,key);
             local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
             return val;
@@ -342,7 +330,7 @@ PLAYER_DAT.TYPE = {
             PLAYER_DAT.SAVE(playerid,"SKILL_ATK_POINT:"..val);
         end,
         get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("SKILL_ATK_POINT");
+            local key = PLAYER_DAT.SAVE_TYPE("SKILL_ATK_POINT",playerid);
             local Encrypted_V = PLAYER_DAT.READ(playerid,key);
             local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
             return val;
@@ -353,7 +341,7 @@ PLAYER_DAT.TYPE = {
             PLAYER_DAT.SAVE(playerid,"SKILL_MATK_POINT:"..val);
             end,
         get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("SKILL_MATK_POINT");
+            local key = PLAYER_DAT.SAVE_TYPE("SKILL_MATK_POINT",playerid);
             local Encrypted_V = PLAYER_DAT.READ(playerid,key);
             local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
             return val;
@@ -373,36 +361,37 @@ PLAYER_DAT.TYPE = {
             PLAYER_DAT.SAVE(playerid,"ITEM_1:"..val);
         end,
         get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("ITEM_1");
+            local key = PLAYER_DAT.SAVE_TYPE("ITEM_1",playerid);
             local Encrypted_V = PLAYER_DAT.READ(playerid,key);
             local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
             return val;
         end
-    },
-    ISNEW_PLAYER = {
-            v = "ISNEW_PLAYER",
+    },JOINNEW = {
+            v = "JOINNEW",
             f = function(playerid,val)
-                PLAYER_DAT.SAVE(playerid,"MAX_HP:300");
-                PLAYER_DAT.SAVE(playerid,"CUR_HP:300");
-                PLAYER_DAT.SAVE(playerid,"ATK_MELEE:10");
-                PLAYER_DAT.SAVE(playerid,"EXP_LEVEL:0");
+                -- PLAYER_DAT.SAVE(playerid,"MAX_HP:300");
+                -- PLAYER_DAT.SAVE(playerid,"CUR_HP:300");
+                -- PLAYER_DAT.SAVE(playerid,"ATK_MELEE:10");
+                PLAYER_DAT.SAVE(playerid,"JOINNEW:0");
+                PLAYER_DAT.SAVE(playerid,"EXPERIENCE:0");
                 PLAYER_DAT.SAVE(playerid,"SKILL_POINT:0");
                 PLAYER_DAT.SAVE(playerid,"SKILL_HP_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_MP_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_ATK_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_MATK_POINT:1");
-                PLAYER_DAT.SAVE(playerid,"ISNEW_PLAYER:"..playerid);
             end,
             get = function(playerid)
-                local key = PLAYER_DAT.SAVE_TYPE("ISNEW_PLAYER");
+                local key = PLAYER_DAT.SAVE_TYPE("JOINNEW",playerid);
+                --print("Getting Key for JOINNEW : ", key);
                 local Encrypted_V = PLAYER_DAT.READ(playerid,key);
+                --print("Encrypted_V = ",Encrypted_V);
                 if(Encrypted_V~=false)then 
                 local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
                     if(Encrypted_V==nil)then return false else 
                         return val;
                     end 
                 else 
-                    return false;
+                    return "JOINNEW:1001";
                 end 
             end
     },
@@ -419,21 +408,65 @@ PLAYER_DAT.TYPE = {
     },
 }
 
+PLAYER_DAT.LOAD = function(playerid)
+    local r , DAT = Valuegroup:getAllGroupItem(18, "PLAYER_DAT", playerid);
+    --print("PLAYER [",playerid,"] LOAD FROM DATA : ",DAT);
+    --print("Attempt 1",DAT);
+    for i ,a in ipairs(DAT) do 
+        local Read_Data1 = readcode(a,secretKey);
+        -- --print("Attempt 2",Read_Data1);
+        local key, value = PLAYER_DAT.GET_KEY_VAL(Read_Data1);
+        local indes = PLAYER_DAT.SAVE_TYPE(key,playerid);
+        --print("Attempt 4",indes);
+        local Read_Data2 = PLAYER_DAT.READ(playerid,indes);
+        if(Read_Data1 == Read_Data2)then 
+            local key, value = PLAYER_DAT.GET_KEY_VAL(Read_Data2);
+            local DatType = PLAYER_DAT.TYPE[key];
+            if(DatType~=nil)then 
+                DatType.f(playerid,value);
+            else 
+                value = "Empty";
+                --print("--print Data 2 : ",Read_Data2 , " --print Data 1 : " , Read_Data1)
+            end 
+            --print("Reading ... : ",DatType,value ,Read_Data1, " | ",Read_Data2)
+        else 
+            --print("Reading ... : ",Read_Data1, " | ",Read_Data2)
+            local key, value = PLAYER_DAT.GET_KEY_VAL(Read_Data1);
+            local DatType = PLAYER_DAT.TYPE[key];
+            if(DatType~=nil)then 
+            DatType.f(playerid,value);
+            else 
+                value = "Empty";
+                --print("--print Data 2 : ",Read_Data2 , " --print Data 1 : " , Read_Data1)
+            end 
+        end 
+        --print("Load : ",indes," k : ",key," v : ", value , "Reading Data : " ,Read_Data1," | ",Read_Data2);
+    end 
+end 
+
+local EXP_to_LEVEL = function(exp)
+    return math.floor(exp/1000);
+end
 
 
 PLAYER_DAT.INIT_PLAYER = function(playerid)
 
-    local checkSum = PLAYER_DAT.TYPE.ISNEW_PLAYER.get(playerid);
+    local checkSum = PLAYER_DAT.TYPE.JOINNEW.get(playerid);
+    --print("Check SUM : ",checkSum);
     --print(checkSum,playerid);
-    if (checkSum ~= false) then
+    if (tonumber(checkSum) == 0) then
         Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid, "Wellcome Back!"));
         --pass
     else 
         Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid,"Is New to the Game!"));
-        PLAYER_DAT.TYPE.ISNEW_PLAYER.f(playerid,true);
+        PLAYER_DAT.TYPE.JOINNEW.f(playerid);
     end 
     PLAYER_DAT.LOAD(playerid);
 
+end 
+local function getPlayerLevel(playerid)
+    local AllExp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+    return EXP_to_LEVEL(AllExp);
 end 
 
 PLAYER_DAT.UPDATE_UI ={
@@ -447,15 +480,16 @@ PLAYER_DAT.UPDATE_UI ={
         Customui:setTexture(playerid, self.uiid, self.uiid.."_9", iconid);
     end,
     setExpDis = function(self,playerid)
-        local exp = math.fmod(PLAYER_DAT.TYPE.EXP_LEVEL.get(playerid),1000);
+        local exp = math.fmod(PLAYER_DAT.TYPE.EXPERIENCE.get(playerid),1000);
         Customui:setText(playerid, self.uiid, self.uiid.."_51", exp.."/1000");
     end,
     setLevelDis = function(self,playerid)
-        local level = EXP_to_LEVEL(PLAYER_DAT.TYPE.EXP_LEVEL.get(playerid));
-        Customui:setText(playerid, self.uiid, self.uiid.."_13", level);
+        local levelplayer = getPlayerLevel(playerid);
+        --print("Level of player [",playerid,"] is : ",levelplayer);
+        Customui:setText(playerid, self.uiid, self.uiid.."_13", levelplayer);
     end,
     setLevelBar = function(self,playerid)
-        local percentageofexp = math.fmod(PLAYER_DAT.TYPE.EXP_LEVEL.get(playerid),1000)/1000;
+        local percentageofexp = math.fmod(PLAYER_DAT.TYPE.EXPERIENCE.get(playerid),1000)/1000;
         Customui:setSize(playerid, self.uiid, self.uiid.."_49", percentageofexp*150, 16)
     end,
     -- setMoneyDis = function(self,playerid)
@@ -480,6 +514,7 @@ PLAYER_DAT.UPDATE_UI ={
     loadSkillDes = function(self,playerid)
         local s1,s2,s3 = PLAYER_DAT.TYPE.MOD_SKILL.get(playerid);
         local s={s1,s2,s3};
+        local desui = {}
         for i,a in ipairs(s) do 
             
         end 
@@ -507,18 +542,8 @@ ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
     else 
         Player:notifyGameInfo2Self(playerid,T_Text(playerid,"ERROR : ")..error);
     end 
-
-    if(playerid==1029380338)then 
-        Valuegroup:setValueNoByName(18,"SkillSet",1,"FireBall", playerid);
-        Valuegroup:setValueNoByName(18,"SkillSet",2,"FireBird", playerid);
-        Valuegroup:setValueNoByName(18,"SkillSet",3,"FireDash", playerid);
-    end;
 end)
 
-local function getPlayerLevel(playerid)
-    local AllExp = PLAYER_DAT.TYPE.EXP_LEVEL.get(playerid);
-    return EXP_to_LEVEL(AllExp);
-end 
 
 local function notifTextFloat(playerid,text) 
     local r,x,y,z = Actor:getPosition(playerid);
@@ -531,7 +556,7 @@ local function notifTextFloat(playerid,text)
 end 
 
 local function IncreasePlayerExp(playerid,value)
-    local CurrentExp = PLAYER_DAT.TYPE.EXP_LEVEL.get(playerid);
+    local CurrentExp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
     local NewExp = CurrentExp + value;
     if(EXP_to_LEVEL(CurrentExp)<EXP_to_LEVEL(NewExp))then 
         -- it is new Level ! 
@@ -547,7 +572,7 @@ local function IncreasePlayerExp(playerid,value)
         notifTextFloat(playerid,"+"..value.."EXP");
     end 
     -- set Total Exp 
-    PLAYER_DAT.TYPE.EXP_LEVEL.f(playerid,NewExp);
+    PLAYER_DAT.TYPE.EXPERIENCE.f(playerid,NewExp);
     PLAYER_DAT.UPDATE_UI_ALL(playerid);
 end 
 
@@ -573,7 +598,12 @@ end
 PLAYER_DAT.ADD_EXP_TO_PLAYER    = function(playerid,exp) IncreasePlayerExp(playerid,exp) end 
 PLAYER_DAT.CONSUME_SKILLPOINT   = function(playerid,ammount)     local currentSkillPoint = PLAYER_DAT.TYPE.SKILL_POINT.get(playerid);    local afterTransaction = currentSkillPoint-ammount;    if(afterTransaction<0)then return false end;    PLAYER_DAT.TYPE.SKILL_POINT.f(playerid,afterTransaction);    PLAYER_DAT.UPDATE_UI_ALL(playerid);    return true; end 
 PLAYER_DAT.ADD_MONEY            = function(playerid,ammount)     local currentCurrency = PLAYER_DAT.TYPE.CURRENCY.get(playerid);    local newCurrency     = currentCurrency + ammount; --[[ Give Notification to Player]]    notifTextFloat(playerid,"+ $"..ammount);     Player:notifyGameInfo2Self(playerid,"#G + $"..ammount.." ") ; PLAYER_DAT.TYPE.CURRENCY.f(playerid,newCurrency); end
-
+PLAYER_DAT.OBTAIN_STAT          = function(playerid) 
+    local initial   = { HP = 300 , Mana = 200 , P_ATK = 10 , M_ATK = 10};
+    local statPoint = { HP = PLAYER_DAT.TYPE.SKILL_HP_POINT.get(playerid),Mana = PLAYER_DAT.TYPE.SKILL_MP_POINT.get(playerid),P_ATK = PLAYER_DAT.TYPE.SKILL_ATK_POINT.get(playerid),M_ATK = PLAYER_DAT.TYPE.SKILL_MATK_POINT.get(playerid)}
+    local stat      = {  HP = initial.HP + statPoint.HP,Mana = initial.Mana + statPoint.Mana,P_ATK = initial.P_ATK + statPoint.P_ATK,M_ATK = initial.M_ATK + statPoint.M_ATK}
+    return stat;
+end 
 
 local function CalculateRewardsDefeatingMob(playerid,actorid)
     -- Get Actorid Max Health Using API 
