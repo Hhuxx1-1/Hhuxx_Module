@@ -8,7 +8,8 @@ local UIElement = setmetatable(UIElement,UIElement_mt);
 local RewardsLogin = {
     200,400,600,800,1000
 }
-
+local TemporaryPlayerReward = {};
+local DoubleUp = 4103;
 local StorageName = "LoginStreak";
 
 local CalculateStreak = function(t)
@@ -99,6 +100,7 @@ local initUI = function(playerid,s)
             Customui:setColor(playerid,UIElement.uiid,UIElement[1],"0xffffff")
         end 
     end 
+    -- Hide Overlay by Default
     Customui:hideElement(playerid,UIElement.uiid,UIElement[30])
 end
 -- Check for Player Condition after opening the UI 
@@ -152,10 +154,32 @@ local function ClaimLogin(playerid)
             -- save to last Login Player Data;
             setTodayLogin(playerid)
         end 
+        return true,RewardsLogin[whichRewards];
     else 
         Player:notifyGameInfo2Self(playerid,"You Already Claim, Come Back Tomorrow");
+        return false;
     end 
 end
+
+local function ShowOverLay(playerid,reward)
+    Customui:showElement(playerid,UIElement.uiid,UIElement[30])
+    Customui:setText(playerid,UIElement.uiid,UIElement[35],"$"..reward);
+    TemporaryPlayerReward[playerid]=reward;
+end
+
+ScriptSupportEvent:registerEvent("Player.AddItem",function(e)
+    local itemid = e.itemid;
+    local playerid = e.eventobjid;
+    if(itemid == DoubleUp)then 
+        if(TemporaryPlayerReward[playerid]~=nil)then 
+        AddCurrencyToPlayer(playerid,TemporaryPlayerReward[playerid]);
+        else 
+        Player:notifyGameInfo2Self(playerid,"Something is Not Right :(");
+        AddCurrencyToPlayer(playerid,100);
+        end 
+    end 
+    Player:hideUIView(playerid,UIElement.uiid);
+end)
 
 ScriptSupportEvent:registerEvent("UI.Button.Click",function(e)
 
@@ -164,8 +188,16 @@ ScriptSupportEvent:registerEvent("UI.Button.Click",function(e)
     local btnid = e.uielement;
     if(uiid == UIElement.uiid)then 
         if btnid == UIElement[1] then 
-            -- Claim Button 
-            ClaimLogin(playerid);initUI(playerid);
+           -- Claim Button 
+           local r,rrw = ClaimLogin(playerid);initUI(playerid);
+           if(r)then
+            ShowOverLay(playerid,rrw);
+           end 
+           
+        end 
+
+        if btnid == UIElement[36] then 
+            local r = Player:openDevGoodsBuyDialog(playerid,4103,"Recieve 2x Daily Rewards")
         end 
     end 
     
