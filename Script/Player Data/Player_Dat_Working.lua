@@ -58,13 +58,8 @@ PLAYER_DAT = {};
 
 PLAYER_DAT.GET_KEY_VAL = function(oneArguments)
     --print(" Arguments From Get_Key_Val : ",oneArguments);
-    if(type(oneArguments)=="string")then 
-        local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
-        return key,value
-    else 
-        --print(oneArguments);
-        Chat:sendSystemMsg("[System] Somedata is Out of Date");
-    end 
+    local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
+    return key,value
 end
 
 PLAYER_DAT.SAVE_TYPE=function (key , playerid)
@@ -84,19 +79,17 @@ PLAYER_DAT.SAVE = function(playerid,Value)
     local key, value = PLAYER_DAT.GET_KEY_VAL(Value);
     local indes,cond,oldText = PLAYER_DAT.SAVE_TYPE(key , playerid);
     local newText = crypt(Value, secretKey);
-    local r = 12345678;
     --print("Saving Data ", indes , " As " , newText)
     if(cond)then 
-        r = Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
+        Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
     else 
-        r = Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
+        Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
         --Valuegroup:setValueNoByName(18, "PLAYER_DAT",indes, newText, playerid);
     end 
     if r==0 then return true else return false end
 end
 
 PLAYER_DAT.READ = function(playerid,indexs)
-    --print(" Reading ", indexs )
     local r,Value = Valuegroup:getValueNoByName(18, "PLAYER_DAT", indexs, playerid);
     --print( "Read From Data Index : ",indexs , " is ", r , " and Value is ", Value);
     if(r~=0)then 
@@ -379,16 +372,13 @@ PLAYER_DAT.TYPE = {
                 -- PLAYER_DAT.SAVE(playerid,"MAX_HP:300");
                 -- PLAYER_DAT.SAVE(playerid,"CUR_HP:300");
                 -- PLAYER_DAT.SAVE(playerid,"ATK_MELEE:10");
-                
-                PLAYER_DAT.SAVE(playerid,"JOINNEW:0")
-            
+                PLAYER_DAT.SAVE(playerid,"JOINNEW:0");
                 PLAYER_DAT.SAVE(playerid,"EXPERIENCE:0");
                 PLAYER_DAT.SAVE(playerid,"SKILL_POINT:0");
                 PLAYER_DAT.SAVE(playerid,"SKILL_HP_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_MP_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_ATK_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_MATK_POINT:1");
-
             end,
             get = function(playerid)
                 local key = PLAYER_DAT.SAVE_TYPE("JOINNEW",playerid);
@@ -464,26 +454,14 @@ PLAYER_DAT.INIT_PLAYER = function(playerid)
     local checkSum = PLAYER_DAT.TYPE.JOINNEW.get(playerid);
     --print("Check SUM : ",checkSum);
     --print(checkSum,playerid);
-    if(checkSum == nil)then
-        --print("Somehow it doesn't Loaded yet");
-        threadpool:wait(5);
-        return PLAYER_DAT.INIT_PLAYER(playerid);
+    if (tonumber(checkSum) == 0) then
+        Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid, "Wellcome Back!"));
+        --pass
     else 
-        if (tonumber(checkSum) == 0) then
-            Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid, "Wellcome Back!"));
-            --pass
-        else 
-            -- Clear Player Dat before Setting it
-            local r = Valuegroup:clearGroupByName(18, "PLAYER_DAT", tonumber(playerid));
-            if(r==0)then threadpool:wait(1); 
-            Chat:sendSystemMsg("Cleared Data Succesfully",playerid);
-            PLAYER_DAT.SAVE(playerid,"JOINNEW:0");
-            end 
-            Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid,"Is New to the Game!"));
-            PLAYER_DAT.TYPE.JOINNEW.f(playerid);
-        end 
-        PLAYER_DAT.LOAD(playerid);
+        Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid,"Is New to the Game!"));
+        PLAYER_DAT.TYPE.JOINNEW.f(playerid);
     end 
+    PLAYER_DAT.LOAD(playerid);
 
 end 
 local function getPlayerLevel(playerid)
@@ -660,13 +638,8 @@ ScriptSupportEvent:registerEvent("Player.DefeatActor",function (e)
     end 
 end)
 
-local function checkPos(playerid,init)
-    local ax,ay,az = init[1],init[2],init[3];
-    local cx,cy,cz = Actor:getPosition(playerid);
-    if(ax==cx and ay==cy and az == cz)then return true else return false end ; 
-end
 
--- init
+--Init
 ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
     threadpool:wait(1);
     local playerid = e.eventobjid;

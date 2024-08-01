@@ -1,7 +1,6 @@
 -- PLAYER_DAT
 local secretKey = "8qwyadihsn";
 local maxSkillPoint = 999;
-local SkillPointGainedOnLevelUp = 3;
 local function bxor(a, b)
     local result = 0;    local bit = 1;    
     while a > 0 or b > 0 do
@@ -58,13 +57,8 @@ PLAYER_DAT = {};
 
 PLAYER_DAT.GET_KEY_VAL = function(oneArguments)
     --print(" Arguments From Get_Key_Val : ",oneArguments);
-    if(type(oneArguments)=="string")then 
-        local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
-        return key,value
-    else 
-        --print(oneArguments);
-        Chat:sendSystemMsg("[System] Somedata is Out of Date");
-    end 
+    local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
+    return key,value
 end
 
 PLAYER_DAT.SAVE_TYPE=function (key , playerid)
@@ -84,19 +78,17 @@ PLAYER_DAT.SAVE = function(playerid,Value)
     local key, value = PLAYER_DAT.GET_KEY_VAL(Value);
     local indes,cond,oldText = PLAYER_DAT.SAVE_TYPE(key , playerid);
     local newText = crypt(Value, secretKey);
-    local r = 12345678;
     --print("Saving Data ", indes , " As " , newText)
     if(cond)then 
-        r = Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
+        Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
     else 
-        r = Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
+        Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
         --Valuegroup:setValueNoByName(18, "PLAYER_DAT",indes, newText, playerid);
     end 
     if r==0 then return true else return false end
 end
 
 PLAYER_DAT.READ = function(playerid,indexs)
-    --print(" Reading ", indexs )
     local r,Value = Valuegroup:getValueNoByName(18, "PLAYER_DAT", indexs, playerid);
     --print( "Read From Data Index : ",indexs , " is ", r , " and Value is ", Value);
     if(r~=0)then 
@@ -128,26 +120,6 @@ PLAYER_DAT.TYPE = {
             if ( r == 0 ) then return v end 
         end 
     },
-    HP_RECOVER  =   { 
-        v = PLAYERATTR.HP_RECOVER,
-        f = function(playerid,val) 
-            Player:setAttr(playerid, 3, tonumber(val));
-        end,
-        get = function(playerid) 
-            local r , v = Player:getAttr(playerid,3);
-            if ( r == 0 ) then return v end 
-        end 
-    },
-    LIFE_NUM    =   {
-        v = PLAYERATTR.LIFE_NUM,
-        f = function(playerid,val) 
-            Player:setAttr(playerid, 4, tonumber(val));
-        end ,
-        get = function(playerid) 
-            local r , v = Player:getAttr(playerid,4);
-            if ( r == 0 ) then return v end 
-        end 
-    },
     MAX_HUNGER  =  {
         v = PLAYERATTR.MAX_HUNGER,
         f = function(playerid,val) 
@@ -167,116 +139,16 @@ PLAYER_DAT.TYPE = {
             local r , v = Player:getAttr(playerid,6);
             if ( r == 0 ) then return v end 
         end 
-    },
-    MAX_OXYGEN = {
-        v = PLAYERATTR.MAX_OXYGEN,
+    },    
+    ATK_MELEE = {
+        v = PLAYERATTR.ATK_MELEE,
         f =  function(playerid,val) 
-            Player:setAttr(playerid,7,tonumber(val)) 
+            Player:setAttr(playerid,17,tonumber(val)) 
         end,
         get = function(playerid) 
-            local r , v = Player:getAttr(playerid,7);
+            local r , v = Player:getAttr(playerid,17);
             if ( r == 0 ) then return v end 
         end 
-    },
-    CUR_OXYGEN = {
-            v = PLAYERATTR.CUR_OXYGEN,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,8,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,8);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    WALK_SPEED = {
-            v = PLAYERATTR.WALK_SPEED,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,10,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,10);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    RUN_SPEED = {
-            v = PLAYERATTR.RUN_SPEED,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,11,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,11);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    SNEAK_SPEED = {
-            v = PLAYERATTR.SNEAK_SPEED,
-             f =  function(playerid,val) 
-                Player:setAttr(playerid,12,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,12);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    JUMP_POWER = {
-            v = PLAYERATTR.JUMP_POWER,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,14,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,14);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    ATK_MELEE = {
-            v = PLAYERATTR.ATK_MELEE,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,17,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,17);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    ATK_REMOTE = {
-            v = PLAYERATTR.ATK_REMOTE,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,18,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,18);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    DEF_MELEE = {
-            v = PLAYERATTR.ATK_REMOTE,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,19,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,19);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    DEF_REMOTE = {
-            v = PLAYERATTR.DEF_REMOTE,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,20,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,20);
-                if ( r == 0 ) then return v end 
-            end 
-    },
-    DIMENSION = {
-            v = PLAYERATTR.DIMENSION,
-            f =  function(playerid,val) 
-                Player:setAttr(playerid,21,tonumber(val)) 
-            end,
-            get = function(playerid) 
-                local r , v = Player:getAttr(playerid,21);
-                if ( r == 0 ) then return v end 
-            end 
     },
     CURRENCY = {
             v = "Currency",
@@ -354,57 +226,6 @@ PLAYER_DAT.TYPE = {
             return val;
         end
     },
-    LAST_LOGIN = {
-        v = "LAST_LOGIN",
-        f = function(playerid,val)
-            
-        end,
-        get = function(playerid)
-
-        end
-    },ITEM_1={
-        v = "ITEM_1",
-        f = function(playerid,val)
-            PLAYER_DAT.SAVE(playerid,"ITEM_1:"..val);
-        end,
-        get = function(playerid)
-            local key = PLAYER_DAT.SAVE_TYPE("ITEM_1",playerid);
-            local Encrypted_V = PLAYER_DAT.READ(playerid,key);
-            local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
-            return val;
-        end
-    },JOINNEW = {
-            v = "JOINNEW",
-            f = function(playerid,val)
-                -- PLAYER_DAT.SAVE(playerid,"MAX_HP:300");
-                -- PLAYER_DAT.SAVE(playerid,"CUR_HP:300");
-                -- PLAYER_DAT.SAVE(playerid,"ATK_MELEE:10");
-                
-                PLAYER_DAT.SAVE(playerid,"JOINNEW:0")
-            
-                PLAYER_DAT.SAVE(playerid,"EXPERIENCE:0");
-                PLAYER_DAT.SAVE(playerid,"SKILL_POINT:0");
-                PLAYER_DAT.SAVE(playerid,"SKILL_HP_POINT:1");
-                PLAYER_DAT.SAVE(playerid,"SKILL_MP_POINT:1");
-                PLAYER_DAT.SAVE(playerid,"SKILL_ATK_POINT:1");
-                PLAYER_DAT.SAVE(playerid,"SKILL_MATK_POINT:1");
-
-            end,
-            get = function(playerid)
-                local key = PLAYER_DAT.SAVE_TYPE("JOINNEW",playerid);
-                --print("Getting Key for JOINNEW : ", key);
-                local Encrypted_V = PLAYER_DAT.READ(playerid,key);
-                --print("Encrypted_V = ",Encrypted_V);
-                if(Encrypted_V~=false)then 
-                local k,val = PLAYER_DAT.GET_KEY_VAL(Encrypted_V);
-                    if(Encrypted_V==nil)then return false else 
-                        return val;
-                    end 
-                else 
-                    return "JOINNEW:1001";
-                end 
-            end
-    },
     MOD_SKILL = {
         v = "MOD_SKILL",
         f = function(playerid,val)
@@ -458,34 +279,6 @@ local EXP_to_LEVEL = function(exp)
     return math.floor(exp/1000);
 end
 
-
-PLAYER_DAT.INIT_PLAYER = function(playerid)
-
-    local checkSum = PLAYER_DAT.TYPE.JOINNEW.get(playerid);
-    --print("Check SUM : ",checkSum);
-    --print(checkSum,playerid);
-    if(checkSum == nil)then
-        --print("Somehow it doesn't Loaded yet");
-        threadpool:wait(5);
-        return PLAYER_DAT.INIT_PLAYER(playerid);
-    else 
-        if (tonumber(checkSum) == 0) then
-            Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid, "Wellcome Back!"));
-            --pass
-        else 
-            -- Clear Player Dat before Setting it
-            local r = Valuegroup:clearGroupByName(18, "PLAYER_DAT", tonumber(playerid));
-            if(r==0)then threadpool:wait(1); 
-            Chat:sendSystemMsg("Cleared Data Succesfully",playerid);
-            PLAYER_DAT.SAVE(playerid,"JOINNEW:0");
-            end 
-            Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid,"Is New to the Game!"));
-            PLAYER_DAT.TYPE.JOINNEW.f(playerid);
-        end 
-        PLAYER_DAT.LOAD(playerid);
-    end 
-
-end 
 local function getPlayerLevel(playerid)
     local AllExp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
     return EXP_to_LEVEL(AllExp);
@@ -526,12 +319,12 @@ PLAYER_DAT.UPDATE_UI ={
         local keyName = {"SKILL_HP_POINT", "SKILL_MP_POINT", "SKILL_ATK_POINT", "SKILL_MATK_POINT"}
         for i=1,4 do 
             local skillpoint = PLAYER_DAT.TYPE[keyName[i]].get(playerid);
-            Customui:setText(playerid,self.uiid,self.uiid.."_"..stextid[i],T_Text(playerid,sname[i]).." Lv."..skillpoint);
+            Customui:setText(playerid,self.uiid,self.uiid.."_"..stextid[i],sname[i].." Lv."..skillpoint);
             Customui:setSize(playerid,self.uiid,self.uiid.."_"..barid[i],(tonumber(skillpoint)/maxSkillPoint)*Lengthmax,heightnow);
         end 
     end,
     setAvailableSkillPoint = function(self,playerid)
-        Customui:setText(playerid,self.uiid,self.uiid.."_47",T_Text(playerid,"You Have").." "..PLAYER_DAT.TYPE.SKILL_POINT.get(playerid).." "..T_Text(playerid,"Skill Point Available"))
+        Customui:setText(playerid,self.uiid,self.uiid.."_47"," "..PLAYER_DAT.TYPE.SKILL_POINT.get(playerid).." ".."Skill Point Available")
     end,
     loadSkillDes = function(self,playerid)
         local s1,s2,s3 = PLAYER_DAT.TYPE.MOD_SKILL.get(playerid);
@@ -562,59 +355,6 @@ local function notifTextFloat(playerid,text)
 	local result,graphid=Graphics:createflotageTextByPos(x+math.random(-1,1), y+2, z+math.random(-1,1), graphicsInfo, x2, y2)
 end 
 
-local function isInBoostExp(playerid)
-    local idsbuff = {50000013,50000011,50000012};
-    for i , a in ipairs(idsbuff)do 
-        local r , bool = Actor:hasBuff(playerid,a);
-        if(r==0)then 
-            return 5-i ;
-        end 
-    end 
-    return 1;
-end 
-
-
-local function IncreasePlayerExp(playerid,value)
-    local CurrentExp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
-    --  Check For Exp Buff 
-    local Multiplier = isInBoostExp(playerid);
-    value = value * Multiplier;
-    local NewExp = CurrentExp + value;
-    if(EXP_to_LEVEL(CurrentExp)<EXP_to_LEVEL(NewExp))then 
-        -- it is new Level ! 
-        -- Add Skill Point Reward To Player  
-        local SkillPoint = PLAYER_DAT.TYPE.SKILL_POINT.get(playerid);
-        local NewSkillPoint = SkillPoint + SkillPointGainedOnLevelUp;
-        PLAYER_DAT.TYPE.SKILL_POINT.f(playerid,NewSkillPoint);
-        -- updateDisplay UI
-        Player:notifyGameInfo2Self(playerid,T_Text(playerid,"Level Up!").." Lv."..EXP_to_LEVEL(NewExp));
-        notifTextFloat(playerid,T_Text(playerid,"Level Up!").." Lv."..EXP_to_LEVEL(NewExp));
-        Player:playMusic(playerid, 10957, 100,1, false);Actor:playBodyEffectById(playerid, 1738 ,1)
-    else 
-        notifTextFloat(playerid,"+"..value.."EXP");
-    end 
-    -- set Total Exp 
-    PLAYER_DAT.TYPE.EXPERIENCE.f(playerid,NewExp);
-    PLAYER_DAT.UPDATE_UI_ALL(playerid);
-end 
-
-local function CalculateRewardsDefeatingPlayer(playerid,tplayerid)
-    -- Get Target Player Level and Player Level
-    local tlevel = getPlayerLevel(tplayerid);
-    local level = getPlayerLevel(playerid);
-    -- If target player Level is Below Level of Player id don't give rewards 
-    if(tlevel<level)then return end;
-    -- rewards = targetplayerid level - playeridLevel
-    local rewards = tlevel - level;
-    -- if rewards is negative then don't give rewards
-    if(rewards<0)then return end;
-    -- Total Exp Gained is 10*rewards
-    local exp = rewards*10;
-    -- Total Money Gained is 15*rewards 
-    local money = rewards*15;
-    -- Increase playerid Exp and Calculate is it Gaining Level or Not 
-    IncreasePlayerExp(playerid,exp);
-end
 
 -- Prepare Global Calling 
 PLAYER_DAT.ADD_EXP_TO_PLAYER    = function(playerid,exp) IncreasePlayerExp(playerid,exp) end 
@@ -625,60 +365,10 @@ PLAYER_DAT.OBTAIN_STAT          = function(playerid)
     local statPoint = { HP = PLAYER_DAT.TYPE.SKILL_HP_POINT.get(playerid),Mana = PLAYER_DAT.TYPE.SKILL_MP_POINT.get(playerid),P_ATK = PLAYER_DAT.TYPE.SKILL_ATK_POINT.get(playerid),M_ATK = PLAYER_DAT.TYPE.SKILL_MATK_POINT.get(playerid)}
     local stat      = {  
           HP    = initial.HP    + ( statPoint.HP    *   30  )     ,
-          Mana  = initial.Mana  + ( statPoint.Mana  *   5  )     ,
+          Mana  = initial.Mana  + ( statPoint.Mana  *   10  )     ,
           P_ATK = initial.P_ATK + ( statPoint.P_ATK *   1   )     ,
           M_ATK = initial.M_ATK + ( statPoint.M_ATK *   2   )     
         }
     return stat;
 end 
 
-local function LoadStat(playerid)
-    local stat = PLAYER_DAT.OBTAIN_STAT(playerid);
-    PLAYER_DAT.TYPE.MAX_HP.f(playerid,stat.HP);PLAYER_DAT.TYPE.CUR_HP.f(playerid,stat.HP);
-    PLAYER_DAT.TYPE.MAX_HUNGER.f(playerid,stat.Mana);PLAYER_DAT.TYPE.CUR_HUNGER.f(playerid,stat.Mana);
-    PLAYER_DAT.TYPE.ATK_MELEE.f(playerid,stat.P_ATK);PLAYER_DAT.TYPE.ATK_REMOTE.f(playerid,stat.P_ATK);
-end
-
-local function CalculateRewardsDefeatingMob(playerid,actorid)
-    -- Get Actorid Max Health Using API 
-    local r , maxHP = Actor:getMaxHP(actorid);
-    -- Calculate Exp from Actor maxHP 
-    local exp = math.min(5+math.ceil(maxHP*0.07314),1000);
-    IncreasePlayerExp(playerid,exp);
-end
-
--- Defeating Target and Rewards Calculations 
-ScriptSupportEvent:registerEvent("Player.DefeatActor",function (e)
-    --print("Defeating target ",e);
-    local playerid = e.eventobjid;
-    local objid = e.toobjid;
-    local r =Actor:isPlayer(objid)
-    if(r == ErrorCode.OK)then 
-        CalculateRewardsDefeatingPlayer(e.eventobjid,objid);
-    else 
-        CalculateRewardsDefeatingMob(e.eventobjid,objid);
-    end 
-end)
-
-local function checkPos(playerid,init)
-    local ax,ay,az = init[1],init[2],init[3];
-    local cx,cy,cz = Actor:getPosition(playerid);
-    if(ax==cx and ay==cy and az == cz)then return true else return false end ; 
-end
-
--- init
-ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
-    threadpool:wait(1);
-    local playerid = e.eventobjid;
-    local result,error = pcall(function ()
-        return PLAYER_DAT.INIT_PLAYER(playerid);
-    end,playerid);
-    threadpool:wait(1);
-    if(result)then 
-        Player:notifyGameInfo2Self(playerid,T_Text(playerid,"Success Loading"));
-        PLAYER_DAT.UPDATE_UI_ALL(playerid);
-        LoadStat(playerid);
-    else 
-        Player:notifyGameInfo2Self(playerid,T_Text(playerid,"ERROR : ")..error);
-    end 
-end)

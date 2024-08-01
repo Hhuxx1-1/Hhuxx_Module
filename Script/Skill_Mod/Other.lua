@@ -34,8 +34,10 @@ local before = {};
 
 ScriptSupportEvent:registerEvent("Actor.AddBuff",function(e) 
     if(e.buffid == 1050)then 
+        if(before[e.eventobjid]==nil)then 
         local r,model= Actor:getActorFacade(e.eventobjid)
         before[e.eventobjid]=model;
+        end 
     end    
 end )
 
@@ -50,9 +52,11 @@ end)
 
 ScriptSupportEvent:registerEvent("Player.AddBuff",function(e) 
      if(e.buffid == 1050)then 
+        if(before[e.eventobjid]==nil)then 
         local r,model= Actor:getActorFacade(e.eventobjid)
         --Chat:sendSystemMsg("Model before is = "..model , e.eventobjid);
         before[e.eventobjid]=model;
+        end 
      end    
 end )
 

@@ -93,10 +93,15 @@ local initUI = function(playerid,s)
         end 
         if checkIsAlreadyLoginToday(playerid) then 
             -- Already Login Today 
-            Customui:showElement(playerid,UIElement.uiid,UIElement[40+s])
+            if(s==1)then 
+                Customui:showElement(playerid,UIElement.uiid,UIElement[40+s])
+            else
+                Customui:hideElement(playerid,UIElement.uiid,UIElement[40+s])
+            end 
             Customui:setColor(playerid,UIElement.uiid,UIElement[1],"0x8f9190")
             -- Show UI ELEMENT CLAIMED
         else 
+            Customui:hideElement(playerid,UIElement.uiid,UIElement[40+s])
             Customui:setColor(playerid,UIElement.uiid,UIElement[1],"0xffffff")
         end 
     end 
@@ -156,7 +161,7 @@ local function ClaimLogin(playerid)
         end 
         return true,RewardsLogin[whichRewards];
     else 
-        Player:notifyGameInfo2Self(playerid,"You Already Claim, Come Back Tomorrow");
+        --Player:notifyGameInfo2Self(playerid,"You Already Claim, Come Back Tomorrow");
         return false;
     end 
 end
@@ -166,6 +171,28 @@ local function ShowOverLay(playerid,reward)
     Customui:setText(playerid,UIElement.uiid,UIElement[35],"$"..reward);
     TemporaryPlayerReward[playerid]=reward;
 end
+
+local function ShowOverLay2(playerid,s) 
+    Customui:showElement(playerid,UIElement.uiid,UIElement[30]);
+    Customui:setText(playerid,UIElement.uiid,UIElement[33],[[Do You Want to Obtain
+    this Reward Again 
+    by Watching Ads?]]);
+    Customui:setText(playerid,UIElement.uiid,UIElement[38],"x1");
+    Customui:setText(playerid,UIElement.uiid,UIElement[39],"Reclaim");
+    Customui:setText(playerid,UIElement.uiid,UIElement[40],[[Double Your Rewards, By Watching Ads
+
+Tap Anywhere to Exit]]);
+    -- get player Streak Login  stored on local s var
+    if(s == nil) then 
+        s = CalculateStreak(GetLastLogin(playerid));
+    elseif(s<0)then 
+        s = math.abs(s);
+        local ss = s-1;
+    end 
+    local reward = RewardsLogin[s];
+    Customui:setText(playerid,UIElement.uiid,UIElement[35],"$"..reward);
+    TemporaryPlayerReward[playerid]=reward;
+end 
 
 ScriptSupportEvent:registerEvent("Player.AddItem",function(e)
     local itemid = e.itemid;
@@ -192,6 +219,8 @@ ScriptSupportEvent:registerEvent("UI.Button.Click",function(e)
            local r,rrw = ClaimLogin(playerid);initUI(playerid);
            if(r)then
             ShowOverLay(playerid,rrw);
+           else 
+            ShowOverLay2(playerid);
            end 
            
         end 
