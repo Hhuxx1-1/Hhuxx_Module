@@ -53,7 +53,7 @@ end
 -- PlayerKill("player1")
 -- PlayerDeath("player1")
 -- PlayerKill("player1")
-
+local LastCachedTime = {};
 local Cache_Data = {};
 local Cache_Data_mt = {
     __call = function(t, key)
@@ -64,12 +64,13 @@ local Cache_Data = setmetatable(Cache_Data,Cache_Data_mt);
 
 local setCacheData = function(data,key)
     Cache_Data[key] = data;
+    LastCachedTime[key] = os.time();
     print(Cache_Data);
 end
 
 local obtainLoad = function (ret,k,v,ix) 
     if ret == ErrorCode.OK then
-        setCacheData({v=v,ix=ix},k);
+        setCacheData({v=v,ix=ix},k);    
     else
         if ret == 2 then 
             local ret = CloudSever:setOrderDataBykey(RankingName,k,1);
@@ -94,6 +95,12 @@ local function setRanking(playerid,v)
         end 
     end 
     -- API from Miniworld
+    -- check Last Cached Time for playerid  
+    if LastCachedTime["S:" .. playerid] and (LastCachedTime["S:" .. playerid] + 20 < os.time()) then
+        -- Load data from server
+        loadLastRanking(playerid)
+        threadpool:wait(retryPolicy);
+    end
     local lastRecord = Cache_Data("S:"..playerid);
     if(lastRecord.v < v)then 
         local ret = CloudSever:setOrderDataBykey(RankingName,"S:"..playerid,v);
@@ -123,23 +130,27 @@ local function isHighestKillStreak(playerid,streak)
     return result;
 end 
 
-local function showCrown(playerid)
-
-
+local function showCrown(playerid,streak)
+local info = Graphics:makeGraphicsImage([[8_1029380338_1722530669]], 0.15, 0xff0000, 2);
+local result = Graphics:createGraphicsImageByActor(playerid,info,{x=0,y=3,z=0},30,0,40);
+local infoStreak = Graphics:makeGraphicsText(tostring(streak),32,0,3);
+local restult2 = Graphics:createGraphicsTxtByActor(playerid,infoStreak,{x=0,y=4,z=0},35,0,40)
 end 
 
 local function removeCrown(playerid)
-
-
+    Graphics:removeGraphicsByObjID(playerid, 2, 10)
+    Graphics:removeGraphicsByObjID(playerid, 3, 1)
 end 
 
 local function checkRanking(playerid)
     local streak = playerStreaks[playerid].getStreak()
-    if streak >= 2 then
+    if streak >= 5 then
         -- Show KillStreak On Player Head 
         -- API from Miniworld
         if(isHighestKillStreak(playerid,streak))then 
-            showCrown(playerid);
+            showCrown(playerid,streak);
+        else 
+            removeCrown(playerid);
         end 
     end 
     setRanking(playerid,streak);
