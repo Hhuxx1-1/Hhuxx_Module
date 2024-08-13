@@ -16,7 +16,7 @@ DEBUG_MODE = false
 
 function sysay(text)
     if(setting.DEBUG_MODE)then 
-    print("System : "..text);
+    print("System [Spawner Config] : ",text);
     -- Chat:sendSystemMsg("System : #W "..text);
     end 
 end 
@@ -39,8 +39,13 @@ end
 
 local lastCost = 0;
 
-function setBoss()
-    local i = math.random(1,#Boss);
+local function setBoss(a)
+    -- a is wave number and always soemthing like 10,20,30 so to get the boss in corresponding wave theme lets devide it by 10 
+    a = a/10 ;
+    -- now the a is the current boss index for each wave theme 
+    -- lets loop the available boss 
+    local i = 1 + (a - 1) % #Boss
+    -- return the id inside table 
     return {Boss[i].ID};
 end 
 
@@ -48,7 +53,7 @@ function setLevel(im,ix)
     for i=im,ix do 
         sysay(" Initiating Level "..i);
         if math.fmod(i,10) == 0 then 
-            LEVEL[i]=setBoss();
+            LEVEL[i]=setBoss(i);
             sysay(" Bos Level Set");
         else 
         local capacity = 2 + math.ceil(i/7);

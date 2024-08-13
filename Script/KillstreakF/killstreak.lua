@@ -1,6 +1,6 @@
 -- Create a table to store player streaks
 local playerStreaks = {} ; local RankingName = "KillStreak_Hhuxx1_00";
-local retryPolicy = 10; local minimumStreak = 5 ;
+local retryPolicy = 5; local minimumStreak = 5 ;
 -- Function to initialize or reset a player's streak
 local function InitPlayerStreak(playerId)
     -- Check if player streak already exists
@@ -33,7 +33,7 @@ local function PlayerKill(playerId)
         local newStreak = playerStreaks[playerId].increment()
         --print("Player " .. playerId .. " is on a killstreak of " .. newStreak)
     else
-        print("Error: Player streak not initialized for player " .. playerId)
+        InitPlayerStreak(playerId);
     end
 end
 
@@ -43,7 +43,7 @@ local function PlayerDeath(playerId)
         playerStreaks[playerId].reset()
         --print("Player " .. playerId .. " streak reset to 0")
     else
-        print("Error: Player streak not initialized for player " .. playerId)
+        --print("Error: Player streak not initialized for player " .. playerId)
     end
 end
 
@@ -67,15 +67,15 @@ local Cache_Data = setmetatable(Cache_Data,Cache_Data_mt);
 -- accessing Cache_Data as Function;
 
 local setCacheData = function(data,key)
-    Cache_Data[key] = data;
-    LastCachedTime[key] = os.time();
-    --print(Cache_Data);
+    Cache_Data[tonumber(key)] = data;
+    LastCachedTime[tonumber(key)] = os.time();
+   --print("Cache_Data",Cache_Data);
 end
 
 --[=[
 Result from Print : 
 {
-    [[S:1029380338]] = {
+    [[1029380338]] = {
         ix=1, 
         v=1
     }
@@ -87,50 +87,60 @@ Result from Print :
    Set New Data for 1st time 
    or  Save it into CahceData 
 ]=]
-local obtainLoad = function (ret,k,v,ix) 
-    if ret == ErrorCode.OK then
-        setCacheData({v=v,ix=ix},k);    
-    else
-        if ret == 2 then 
-            local ret = CloudSever:setOrderDataBykey(RankingName,k,1);
-            --print("Retrying : Result : ",ret)
-        else
-            --print('Connection Failed');
-        end
-    end
-end
-
 
 --Function to invoke loadLastRanking 
 local function  loadLastRanking(playerid)
-    local ret = CloudSever:getOrderDataByKeyEx(RankingName,"S:"..playerid,obtainLoad)
+    local obtainLoad = function (ret,k,v,ix) 
+       --print("obtainLoad",ret,k,v,ix)
+        if ret then
+            setCacheData({v=tonumber(v),ix=tonumber(ix)},k);    
+        else
+            local rets = CloudSever:setOrderDataBykey(RankingName,k,1);
+            Chat:sendSystemMsg("Retrying : Result : "..rets.."Key = "..k,1029380338)
+        end
+    end
+    local ret = CloudSever:getOrderDataByKey(RankingName,playerid,obtainLoad);
+   --print("getOrderDataByKey result : ",ret);
 end
 
 -- Function to save Killstreak Ranking into Cloud Server 
 local function setRanking(playerid,v)
-    while Cache_Data("S:"..playerid)==nil do 
-        if(Cache_Data("S:"..playerid)==nil) then 
-            loadLastRanking(playerid);
+    local _,name = Player:getNickname(playerid);
+    local rtry = 0 ;
+    while Cache_Data(playerid)==nil do 
+        if(Cache_Data(playerid)==nil) then 
             threadpool:wait(retryPolicy);
+            loadLastRanking(playerid);
+            rtry = rtry + 1 ;
+           --print("Trying to setRanking ["..rtry.."]");
+            if(rtry>50)then  
+               --print("Failed to setRanking"); break;
+            end 
+           --print("Cache Data : ",Cache_Data);
         else 
+           --print("Cache Data already Exist!");
             break;
         end 
     end 
     -- check Last Cached Time for playerid  
-    if LastCachedTime["S:" .. playerid] and (LastCachedTime["S:" .. playerid] + 20 < os.time()) then
+    if LastCachedTime[playerid] and (LastCachedTime[playerid] + 20 < os.time()) then
         -- Load data from server
-        loadLastRanking(playerid)
         threadpool:wait(retryPolicy);
+        loadLastRanking(playerid)
+       --print("New Data Cached for player : "..playerid);
     end
-    local lastRecord = Cache_Data("S:"..playerid);
+    local lastRecord = Cache_Data(playerid);
+   --print("lastRecord",lastRecord);
     if(lastRecord.v < v)then 
         -- API to Set Order Data by Key from Miniworld
-        local ret = CloudSever:setOrderDataBykey(RankingName,"S:"..playerid,v);
+        local ret = CloudSever:setOrderDataBykey(RankingName,playerid,v);
+       --print("setRanking",ret,playerid,v);
         if ret == ErrorCode.OK then
-            --print("setRanking success [Playerid : ",playerid,"] with ",v);
+           --print("setRanking success [Playerid : ",playerid,"] with ",v);
+            Chat:sendSystemMsg("#G"..name.." #WNew #Y"..v.." Kill Streak #WRecord ");
             return true;
         else
-            --print("Error [102] function setRanking : Unable to Set Ranking ");
+            Chat:sendSystemMsg("Error [102] function setRanking : Unable to Set Ranking "..playerid,1029380338);
             return false;
         end
     else 
@@ -159,7 +169,7 @@ end
 
 -- Show Crown Head 
 local function showCrown(playerid,streak)
-local info = Graphics:makeGraphicsImage([[8_1029380338_1722530669]], 0.15, 0xff0000, 2);
+local info = Graphics:makeGraphicsImage([[8_1029380338_1722530669]], 0.13, 0xff0000, 2);
 local result = Graphics:createGraphicsImageByActor(playerid,info,{x=0,y=3,z=0},30,0,40);
 local infoStreak = Graphics:makeGraphicsText(tostring(streak),32,0,3);
 local restult2 = Graphics:createGraphicsTxtByActor(playerid,infoStreak,{x=0,y=4,z=0},35,0,40)
@@ -170,6 +180,16 @@ local function removeCrown(playerid)
     Graphics:removeGraphicsByObjID(playerid, 2, 10)
     Graphics:removeGraphicsByObjID(playerid, 3, 1)
 end 
+
+local function safeSetRanking(playerid, streak)
+    local success, err = pcall(setRanking, playerid, streak)
+
+    if not success then
+        -- Handle the error here
+        print("Error setting ranking: " .. err)
+    end
+end
+
 
 -- Check Ranking
 local function checkRanking(playerid)
@@ -183,13 +203,13 @@ local function checkRanking(playerid)
             removeCrown(playerid);
         end 
     end 
-    setRanking(playerid,streak);
+    safeSetRanking(playerid, streak);
 end 
 
 -- Connect to Listener Event
 
 ScriptSupportEvent:registerEvent("Player.DefeatActor",function(e) 
-    local target = e.eventobjid;
+    local target = tonumber(e.eventobjid);
     if(Actor:isPlayer(e.toobjid)==0)then 
         PlayerKill(target);
         checkRanking(target);
@@ -197,6 +217,7 @@ ScriptSupportEvent:registerEvent("Player.DefeatActor",function(e)
 end)
 ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e) 
     InitPlayerStreak(e.eventobjid);
+    --LOGGER.LOG("Player Joined ",e.eventobjid)
 end)
 ScriptSupportEvent:registerEvent("Player.Die",function(e) 
     PlayerDeath(e.eventobjid); removeCrown(e.eventobjid)

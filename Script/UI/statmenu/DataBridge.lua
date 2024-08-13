@@ -150,6 +150,16 @@ PLAYER_DAT.TYPE = {
             if ( r == 0 ) then return v end 
         end 
     },
+    ATK_REMOTE = {
+        v = PLAYERATTR.ATK_REMOTE,
+        f =  function(playerid,val) 
+            Player:setAttr(playerid,18,tonumber(val)) 
+        end,
+        get = function(playerid) 
+            local r , v = Player:getAttr(playerid,18);
+            if ( r == 0 ) then return v end 
+        end 
+    },
     CURRENCY = {
             v = "Currency",
             f = function(playerid,val)
@@ -274,11 +284,19 @@ PLAYER_DAT.LOAD = function(playerid)
         --print("Load : ",indes," k : ",key," v : ", value , "Reading Data : " ,Read_Data1," | ",Read_Data2);
     end 
 end 
-
 local EXP_to_LEVEL = function(exp)
-    return math.floor(exp/1000);
-end
+    local level = 0
+    local required_exp = 100
+    local increment = 200
+    exp = tonumber(exp);
+    while exp >= required_exp do
+        exp = exp - required_exp
+        level = level + 1
+        required_exp = required_exp + increment
+    end
 
+    return level,exp,required_exp;
+end
 local function getPlayerLevel(playerid)
     local AllExp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
     return EXP_to_LEVEL(AllExp);
@@ -295,16 +313,19 @@ PLAYER_DAT.UPDATE_UI ={
         Customui:setTexture(playerid, self.uiid, self.uiid.."_9", iconid);
     end,
     setExpDis = function(self,playerid)
-        local exp = math.fmod(PLAYER_DAT.TYPE.EXPERIENCE.get(playerid),1000);
-        Customui:setText(playerid, self.uiid, self.uiid.."_51", exp.."/1000");
+        local curexp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+        local L,E,R = EXP_to_LEVEL(curexp);
+        Customui:setText(playerid, self.uiid, self.uiid.."_51", E.."/"..R);
     end,
     setLevelDis = function(self,playerid)
-        local levelplayer = getPlayerLevel(playerid);
-        --print("Level of player [",playerid,"] is : ",levelplayer);
-        Customui:setText(playerid, self.uiid, self.uiid.."_13", levelplayer);
+        local curexp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+        local L,E,R = EXP_to_LEVEL(curexp);
+        Customui:setText(playerid, self.uiid, self.uiid.."_13", L);
     end,
     setLevelBar = function(self,playerid)
-        local percentageofexp = math.fmod(PLAYER_DAT.TYPE.EXPERIENCE.get(playerid),1000)/1000;
+        local curexp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+        local L,E,R = EXP_to_LEVEL(curexp);
+        local percentageofexp = E/R;
         Customui:setSize(playerid, self.uiid, self.uiid.."_49", percentageofexp*150, 16)
     end,
     -- setMoneyDis = function(self,playerid)

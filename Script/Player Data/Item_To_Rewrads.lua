@@ -10,6 +10,9 @@ end );
 ITEM_SHOP.REGISTER_NEW_ITEM(4105,function(e)  local playerid = e.eventobjid; PLAYER_DAT.ADD_MONEY(playerid,500); 
     Player:removeBackpackItem(playerid, 4105, 1);
 end );
+ITEM_SHOP.REGISTER_NEW_ITEM(4114,function(e)  local playerid = e.eventobjid; PLAYER_DAT.ADD_MONEY(playerid,5000); 
+    Player:removeBackpackItem(playerid, 4114, 1);
+end );
 ITEM_SHOP.REGISTER_NEW_ITEM(4108,function(e)  local playerid = e.eventobjid; PLAYER_DAT.ADD_MONEY(playerid,50000); 
     Player:removeBackpackItem(playerid, 4108, 1);
 end );
@@ -27,6 +30,10 @@ end );
 ITEM_SHOP.REGISTER_NEW_ITEM(4112,function(e)  local playerid = e.eventobjid; Actor:addBuff(playerid,50000012,1,12000)
     Player:removeBackpackItem(playerid, 4112, 1);
 end );
-ITEM_SHOP.REGISTER_NEW_ITEM(4113,function(e)  local playerid = e.eventobjid; Actor:addBuff(playerid,50000012,1,12000)
+ITEM_SHOP.REGISTER_NEW_ITEM(4113,function(e)  local playerid = e.eventobjid; Actor:addBuff(playerid,50000013,1,12000)
     Player:removeBackpackItem(playerid, 4113, 1);
+end );
+--  DOuble Money Buff 
+ITEM_SHOP.REGISTER_NEW_ITEM(4115,function(e)  local playerid = e.eventobjid; Actor:addBuff(playerid,50000015,1,12000)
+    Player:removeBackpackItem(playerid, 4115, 1);
 end );

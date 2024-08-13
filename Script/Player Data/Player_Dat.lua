@@ -58,13 +58,8 @@ PLAYER_DAT = {};
 
 PLAYER_DAT.GET_KEY_VAL = function(oneArguments)
     --print(" Arguments From Get_Key_Val : ",oneArguments);
-    if(type(oneArguments)=="string")then 
-        local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
-        return key,value
-    else 
-        --print(oneArguments);
-        Chat:sendSystemMsg("[System] Somedata is Out of Date");
-    end 
+    local key, value = string.match(oneArguments, "([%w_]+):(%d+)");
+    return key,value
 end
 
 PLAYER_DAT.SAVE_TYPE=function (key , playerid)
@@ -84,19 +79,17 @@ PLAYER_DAT.SAVE = function(playerid,Value)
     local key, value = PLAYER_DAT.GET_KEY_VAL(Value);
     local indes,cond,oldText = PLAYER_DAT.SAVE_TYPE(key , playerid);
     local newText = crypt(Value, secretKey);
-    local r = 12345678;
     --print("Saving Data ", indes , " As " , newText)
     if(cond)then 
-        r = Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
+        Valuegroup:replaceValueByName(18, "PLAYER_DAT", oldText, newText, playerid)
     else 
-        r = Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
+        Valuegroup:insertInGroupByName(18, "PLAYER_DAT", newText, playerid)
         --Valuegroup:setValueNoByName(18, "PLAYER_DAT",indes, newText, playerid);
     end 
     if r==0 then return true else return false end
 end
 
 PLAYER_DAT.READ = function(playerid,indexs)
-    --print(" Reading ", indexs )
     local r,Value = Valuegroup:getValueNoByName(18, "PLAYER_DAT", indexs, playerid);
     --print( "Read From Data Index : ",indexs , " is ", r , " and Value is ", Value);
     if(r~=0)then 
@@ -379,16 +372,13 @@ PLAYER_DAT.TYPE = {
                 -- PLAYER_DAT.SAVE(playerid,"MAX_HP:300");
                 -- PLAYER_DAT.SAVE(playerid,"CUR_HP:300");
                 -- PLAYER_DAT.SAVE(playerid,"ATK_MELEE:10");
-                
-                PLAYER_DAT.SAVE(playerid,"JOINNEW:0")
-            
+                PLAYER_DAT.SAVE(playerid,"JOINNEW:0");
                 PLAYER_DAT.SAVE(playerid,"EXPERIENCE:0");
                 PLAYER_DAT.SAVE(playerid,"SKILL_POINT:0");
                 PLAYER_DAT.SAVE(playerid,"SKILL_HP_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_MP_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_ATK_POINT:1");
                 PLAYER_DAT.SAVE(playerid,"SKILL_MATK_POINT:1");
-
             end,
             get = function(playerid)
                 local key = PLAYER_DAT.SAVE_TYPE("JOINNEW",playerid);
@@ -455,35 +445,34 @@ PLAYER_DAT.LOAD = function(playerid)
 end 
 
 local EXP_to_LEVEL = function(exp)
-    return math.floor(exp/1000);
-end
+    local level = 0
+    local required_exp = 100
+    local increment = 200
+    exp = tonumber(exp);
+    while exp >= required_exp do
+        exp = exp - required_exp
+        level = level + 1
+        required_exp = required_exp + increment
+    end
 
+    return level,exp,required_exp;
+end
 
 PLAYER_DAT.INIT_PLAYER = function(playerid)
 
     local checkSum = PLAYER_DAT.TYPE.JOINNEW.get(playerid);
     --print("Check SUM : ",checkSum);
     --print(checkSum,playerid);
-    if(checkSum == nil)then
-        --print("Somehow it doesn't Loaded yet");
-        threadpool:wait(5);
-        return PLAYER_DAT.INIT_PLAYER(playerid);
+    if (tonumber(checkSum) == 0) then
+        Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid, "Wellcome Back!"));
+        --pass
+        Player:StandReportEvent(playerid," Player Comeback ");
     else 
-        if (tonumber(checkSum) == 0) then
-            Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid, "Wellcome Back!"));
-            --pass
-        else 
-            -- Clear Player Dat before Setting it
-            local r = Valuegroup:clearGroupByName(18, "PLAYER_DAT", tonumber(playerid));
-            if(r==0)then threadpool:wait(1); 
-            Chat:sendSystemMsg("Cleared Data Succesfully",playerid);
-            PLAYER_DAT.SAVE(playerid,"JOINNEW:0");
-            end 
-            Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid,"Is New to the Game!"));
-            PLAYER_DAT.TYPE.JOINNEW.f(playerid);
-        end 
-        PLAYER_DAT.LOAD(playerid);
+        Chat:sendSystemMsg("#G["..playerid.."] #W:"..T_Text(playerid,"Is New to the Game!"));
+        PLAYER_DAT.TYPE.JOINNEW.f(playerid);
+        Player:StandReportEvent(playerid," New Player ");
     end 
+    PLAYER_DAT.LOAD(playerid);
 
 end 
 local function getPlayerLevel(playerid)
@@ -502,16 +491,19 @@ PLAYER_DAT.UPDATE_UI ={
         Customui:setTexture(playerid, self.uiid, self.uiid.."_9", iconid);
     end,
     setExpDis = function(self,playerid)
-        local exp = math.fmod(PLAYER_DAT.TYPE.EXPERIENCE.get(playerid),1000);
-        Customui:setText(playerid, self.uiid, self.uiid.."_51", exp.."/1000");
+        local curexp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+        local L,E,R = EXP_to_LEVEL(curexp);
+        Customui:setText(playerid, self.uiid, self.uiid.."_51", E.."/"..R);
     end,
     setLevelDis = function(self,playerid)
-        local levelplayer = getPlayerLevel(playerid);
-        --print("Level of player [",playerid,"] is : ",levelplayer);
-        Customui:setText(playerid, self.uiid, self.uiid.."_13", levelplayer);
+        local curexp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+        local L,E,R = EXP_to_LEVEL(curexp);
+        Customui:setText(playerid, self.uiid, self.uiid.."_13", L);
     end,
     setLevelBar = function(self,playerid)
-        local percentageofexp = math.fmod(PLAYER_DAT.TYPE.EXPERIENCE.get(playerid),1000)/1000;
+        local curexp = PLAYER_DAT.TYPE.EXPERIENCE.get(playerid);
+        local L,E,R = EXP_to_LEVEL(curexp);
+        local percentageofexp = E/R;
         Customui:setSize(playerid, self.uiid, self.uiid.."_49", percentageofexp*150, 16)
     end,
     -- setMoneyDis = function(self,playerid)
@@ -536,9 +528,20 @@ PLAYER_DAT.UPDATE_UI ={
     loadSkillDes = function(self,playerid)
         local s1,s2,s3 = PLAYER_DAT.TYPE.MOD_SKILL.get(playerid);
         local s={s1,s2,s3};
-        local desui = {}
+        local desui = {self.uiid.."_42",self.uiid.."_43",self.uiid.."_44"}
         for i,a in ipairs(s) do 
-            
+            if(act[a]~=nil)then 
+                local textD = act[a].description or "Not Available yet";
+                local icon = act[a].icon;
+                Customui:setText(playerid,self.uiid,desui[i],textD);
+                Customui:setTexture(playerid,self.uiid,self.uiid.."_"..i,icon);
+--[[             Set The Thumbnail]]
+                if act[a].thumb ~= nil then 
+                    Customui:setTexture(playerid,self.uiid,self.uiid.."_36",act[a].thumb);
+                end 
+            else 
+                Customui:setText(playerid,self.uiid,desui[i],"Skill not Set yet");
+            end 
         end 
     end
 }
@@ -589,7 +592,8 @@ local function IncreasePlayerExp(playerid,value)
         -- updateDisplay UI
         Player:notifyGameInfo2Self(playerid,T_Text(playerid,"Level Up!").." Lv."..EXP_to_LEVEL(NewExp));
         notifTextFloat(playerid,T_Text(playerid,"Level Up!").." Lv."..EXP_to_LEVEL(NewExp));
-        Player:playMusic(playerid, 10957, 100,1, false);Actor:playBodyEffectById(playerid, 1738 ,1)
+        Player:playMusic(playerid, 10957, 100,1, false);Actor:playBodyEffectById(playerid, 1738 ,1);
+        Player:StandReportEvent(playerid,"Level Up! Lv"..EXP_to_LEVEL(NewExp));
     else 
         notifTextFloat(playerid,"+"..value.."EXP");
     end 
@@ -643,7 +647,7 @@ local function CalculateRewardsDefeatingMob(playerid,actorid)
     -- Get Actorid Max Health Using API 
     local r , maxHP = Actor:getMaxHP(actorid);
     -- Calculate Exp from Actor maxHP 
-    local exp = math.min(5+math.ceil(maxHP*0.07314),1000);
+    local exp = 5+math.ceil(maxHP*0.05314);
     IncreasePlayerExp(playerid,exp);
 end
 
@@ -660,13 +664,8 @@ ScriptSupportEvent:registerEvent("Player.DefeatActor",function (e)
     end 
 end)
 
-local function checkPos(playerid,init)
-    local ax,ay,az = init[1],init[2],init[3];
-    local cx,cy,cz = Actor:getPosition(playerid);
-    if(ax==cx and ay==cy and az == cz)then return true else return false end ; 
-end
 
--- init
+--Init
 ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
     threadpool:wait(1);
     local playerid = e.eventobjid;
@@ -682,3 +681,15 @@ ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
         Player:notifyGameInfo2Self(playerid,T_Text(playerid,"ERROR : ")..error);
     end 
 end)
+ScriptSupportEvent:registerEvent('UPDATE_ACCROS_UI', function(e)
+print(e);
+local ret, data = pcall(JSON.decode,JSON,e.data);
+if(data)then 
+    PLAYER_DAT.UPDATE_UI_ALL(data.playerid)
+else 
+    local result,num,array=World:getAllPlayers(-1)
+    for i,a in ipairs(array)do 
+    PLAYER_DAT.UPDATE_UI_ALL(a);
+    end 
+end 
+end);

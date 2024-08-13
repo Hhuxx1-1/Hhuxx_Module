@@ -204,6 +204,7 @@ ScriptSupportEvent:registerEvent("Player.AddItem",function(e)
         Player:notifyGameInfo2Self(playerid,"Something is Not Right :(");
         AddCurrencyToPlayer(playerid,100);
         end 
+        Player:removeBackpackItem(playerid, DoubleUp, 1);
     end 
     Player:hideUIView(playerid,UIElement.uiid);
 end)

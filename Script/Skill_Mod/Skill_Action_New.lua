@@ -38,6 +38,9 @@ local function CalculateDirBetween2Pos(t1,t2)
     local magnitude = math.sqrt(dirX^2 + dirY^2 + dirZ^2); 
     return dirX / magnitude,dirY / magnitude,dirZ / magnitude
 end 
+local function calculate_distance(px, py, pz, x, y, z)
+    return math.sqrt((px - x)^2 + (py - y)^2 + (pz - z)^2)
+end
 local function addTemporaryBlockOnGround(x,y,z,blockid)                                             local rY = y; for i=y+5,y-15 do rY=i; if(checkBlockisSolid(x,i-1,z))then break; end end addBlock(blockid,x,rY,z); end 
 local function playSoundOnPos(x,y,z,whatsound,volume,pitch)               if(pitch==nil)then pitch=1 end                                World:playSoundEffectOnPos({x=x,y=y,z=z}, whatsound, volume, pitch, false) end 
 -- list of local function v2 
@@ -126,6 +129,11 @@ local function mergeTables(table1, table2)
     end 
     return mergedTable
 end
+
+local function reduceCD(playerid,numSkill,thickReduce) 
+    local r , tick = Actor:getBuffLeftTick(playerid,skill.cooldown[numSkill]);
+    if(r==0)then Actor:addBuff(playerid,skill.cooldown[numSkill],1,math.max(1,tick-thickReduce)) end;
+end 
 -- List of Constant 
 local Constants = {};
 Constants.Projectile_Bullet = 15003;
@@ -619,19 +627,19 @@ act.PowerPunch={
 act.Sword100={
     CD = 6,    Cost = 5, main = function(playerid)
         RUNNER.NEW(function(playerid) 
-            for i=1,41,5 do RUNNER.NEW(function(playerid)
+            for i=1,25,4 do RUNNER.NEW(function(playerid)
                 local x,y,z = getPos(playerid); local dirx,diry,dirz = getDir(playerid); local aimx,aimy,aimz = getAimPos(playerid); 
                 local sEffect = 1249; local soEffect = 10635;
                 local lx,ly,lz = -dirz,diry,dirx; --left
                 local rx,ry,rz = dirz,diry,-dirx; --right
-                local cx1,cy1,cz1 = x+(lx*3),y+3,z+(lz*3);
-                local cx2,cy2,cz2 = x+(rx*3),y+3,z+(rz*3);
-                addEffect(cx1,cy1-1,cz1,sEffect,2);
-                addEffect(cx2,cy2-1,cz2,sEffect,2);
-                RUNNER.NEW(function(playerid,cx1,cx2,cy1,cy2,cz1,cz2,aimx,aimy,aimz)
+                local cx1,cy1,cz1 = x+(lx*3),y+4.5,z+(lz*3);
+                local cx2,cy2,cz2 = x+(rx*3),y+4.5,z+(rz*3);
+                addEffect(cx1,cy1-1-math.fmod(i,3),cz1,sEffect,2);
+                addEffect(cx2,cy2-1-math.fmod(i,3),cz2,sEffect,2);
+                RUNNER.NEW(function(playerid,cx1,cx2,cy1,cy2,cz1,cz2,aimx,aimy,aimz,i)
                     local mdl = {[[fullycustom_10293803381722387686]],[[fullycustom_10293803381722387686]]}
-                    local re,P1 = World:spawnProjectile(playerid,15003 , cx1,cy1,cz1, aimx,aimy,aimz, 200);
-                    local re,P2 = World:spawnProjectile(playerid,15003 , cx2,cy2,cz2, aimx,aimy,aimz, 200);
+                    local re,P1 = World:spawnProjectile(playerid,15003 , cx1,cy1-math.fmod(i,3),cz1, aimx,aimy,aimz, 150);
+                    local re,P2 = World:spawnProjectile(playerid,15003 , cx2,cy2-math.fmod(i,3),cz2, aimx,aimy,aimz, 150);
                     -- change the Appearence
                     playSoundOnActor(P1,10471,100,1);
                     playSoundOnActor(P2,10471,100,1);
@@ -650,9 +658,9 @@ act.Sword100={
                             cancelEffect(x,y+0.6,z,1226,1)
                         end,{x,y,z},50)
                     end) 
-                end,{playerid,cx1,cx2,cy1,cy2,cz1,cz2,aimx,aimy,aimz},5)
+                end,{playerid,cx1,cx2,cy1,cy2,cz1,cz2,aimx,aimy,aimz,i},5)
                 RUNNER.NEW(function(cx1,cy1,cz1,cx2,cy2,cz2,sEffect)
-                    cancelEffect(cx1,cy1-1,cz1,sEffect);cancelEffect(cx2,cy2-1,cz2,sEffect);
+                    cancelEffect(cx1,cy1-1-math.fmod(i,3),cz1,sEffect);cancelEffect(cx2,cy2-1-math.fmod(i,3),cz2,sEffect);
                 end,{cx1,cy1,cz1,cx2,cy2,cz2,sEffect},25)
             end,{playerid},i) end 
         end,{playerid},10)
@@ -679,7 +687,7 @@ act.HighAndLow={CD=26,Cost=5,main = function(playerid)
                 local tx,ty,tz = getPos(a);
                 local dirx,diry,dirz = getDir(playerid);
                 Player:setPosition(playerid,tx-(dirx*5),ty+0.4,tz-(dirz*5));
-                dealsDamageButNotHost(playerid,tx,ty,tz,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,450));
+                dealsDamageButNotHost(playerid,tx,ty,tz,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,450)+in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,50));
                 -- TODO add Sound Effect and Special Effect 
                 Actor:playBodyEffectById(playerid, 1356, 5)
                 playSoundOnPos(tx-dirx,ty+0.4,tz-dirz,10641,100,2.5)
@@ -696,35 +704,124 @@ end}
 
 act.ExtraSlash={CD = 20, Cost = 10, main = function(playerid)
     local x,y,z = getPos(playerid); 
-    local anyObject = getObj_Area(playerid,x,y,z,12,12,12);
+    local anyObject = getObj_Area(playerid,x,y,z,12,8,12);
     local ObjPlayer = notObj(playerid,filterObj("Player",anyObject));
     local ObjCreature = filterObj("Creature",anyObject);
     local theObject = mergeTables(ObjPlayer,ObjCreature); 
     for i,a in ipairs(theObject) do 
-        for si = 2,20,2 do RUNNER.NEW(function(playerid,a)
+        for si = 0,16,4 do RUNNER.NEW(function(playerid,a)
             local r,hp = Actor:getHP(a);
             if(r==0)then if(hp>0)then
                 local x,y,z = getPos(playerid);local tx,ty,tz = getPos(a);
                 local dx,dy,dz = CalculateDirBetween2Pos({x=tx,y=ty,z=tz},{x=x,y=y,z=z});
                 dash(a,dx,0,dz); 
-                dealsDamageButNotHost(playerid,tx,ty,tz,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,30)+in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,30),0);
+                dealsDamageButNotHost(playerid,tx,ty,tz,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,10)+in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,5),0);
+                -- TODO add Sound Effect and Special Effect
+                addEffect(x,y-4,z,1221,2);playSoundOnPos(x,y,z,10198,100,0.87);
+                RUNNER.NEW(function(x,y,z)
+                    cancelEffect(x,y-4,z,1221);
+                end,{x,y,z},40)
             end end 
         end,{playerid,a},si)end 
-        Actor:playBodyEffectById(playerid,1366,4);
-        RUNNER.NEW(function(a)
-            local r = Actor:isPlayer(a,playerid) ;
-            if(r==0)then 
-            Actor:addBuff(a,buffStuned,1,60);
-            else 
-            Actor:addBuff(a,buffStuned-1,1,60);
-            end 
+
+        RUNNER.NEW(function(a,playerid)
+            local px,py,pz = getPos(playerid);
             local x,y,z = getPos(a);
-            dealsDamageButNotHost(playerid,x,y,z,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,120)+in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,120),0);
-        end,{a,playerid},25);
+            local distance = calculate_distance(px, py, pz, x, y, z)
+            if(distance<4)then 
+                local r = Actor:isPlayer(a) ;
+                if(r==0)then 
+                Actor:addBuff(a,buffStuned,1,60);
+                else 
+                Actor:addBuff(a,buffStuned-1,1,60);
+                end 
+                Actor:playBodyEffectById(a,1619,2);
+                playSoundOnPos(x,y,z,10634,100,2);
+                dealsDamageButNotHost(playerid,x,y,z,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,100)+in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,60),0);
+            else 
+                dealsDamageButNotHost(playerid,x,y,z,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).P_ATK,20)+in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,10),0);
+            end 
+        end,{a,playerid},18);
     end 
     end
 }
-
+act.GravityBind={
+    CD = 30, Cost = 10, main = function(playerid)
+        local x,y,z = getPos(playerid);
+        local anyObject = getObj_Area(playerid,x,y,z,16,8,16);
+        addEffect(x,y,z,1291,4);
+        local ObjPlayer = notObj(playerid,filterObj("Player",anyObject));
+        local ObjCreature = filterObj("Creature",anyObject);
+        local theObject = mergeTables(ObjPlayer,ObjCreature); 
+        for i ,a in ipairs(theObject)do 
+            
+            for di = 0,30  do 
+            RUNNER.NEW(function(a,playerid,di)
+                Actor:playBodyEffectById(a,1558,1);
+                dash(a,0,0.2,0) 
+            end,{a,playerid,di},di)
+            end 
+            RUNNER.NEW(function(a,playerid)
+                dash(a,0,-10,0); 
+                local x,y,z = getPos(a); 
+                local dmg = PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK;
+                dealsDamageButNotHost(playerid,x,y,z,1,30,1,in2per(dmg,250),DmgType.FALL);
+                dealsDamageButNotHost(playerid,x,y,z,2,30,2,in2per(dmg,250),DmgType.MELEE);
+                Actor:stopBodyEffectById(a,1558);
+            end,{a,playerid},26)
+        end 
+        RUNNER.NEW(function(x,y,z)
+            cancelEffect(x,y,z,1291,4);
+        end,{x,y,z},40)
+    end 
+}
+act.GravityMass={
+    CD = 20, Cost = 5, main = function(playerid)
+        
+    RUNNER.NEW(function(playerid)
+        -- get obj on Radius 
+        local x,y,z = getPos(playerid); local ax,ay,az = getAimPos(playerid);
+        local anyObject = getObj_Area(playerid,ax,ay,az,9,5,9);
+        local ObjPlayer = notObj(playerid,filterObj("Player",anyObject));
+        local ObjCreature = filterObj("Creature",anyObject);
+        local theObject = mergeTables(ObjPlayer,ObjCreature); 
+        addEffect(ax,y,az,1061,1);
+        for i,a in ipairs(theObject) do 
+            RUNNER.NEW(function(playerid,a)
+                local r = Actor:isPlayer(a) ;
+                if(r==0)then 
+                Actor:addBuff(a,buffStuned,1,20);
+                else 
+                Actor:addBuff(a,buffStuned-1,1,20);
+                end 
+                local x,y,z = getPos(a);
+                Actor:playBodyEffectById(a,1619,2);
+                playSoundOnPos(x,y,z,10634,100,2);
+                dealsDamageButNotHost(playerid,x,y,z,1,1,1,in2per(PLAYER_DAT.OBTAIN_STAT(playerid).M_ATK,100),0);
+            end,{playerid,a},5)
+        end 
+        RUNNER.NEW(function(ax,y,az) cancelEffect(ax,y,az,1061,1) end,{ax,y,az,1061,1},10);
+    end,{playerid},5);
+    end
+}
+act.GravityJump={
+    CD = 5, Cost = 5, main = function(playerid)
+        local adix,adiy,adiz = getPos(playerid);
+        Actor:addBuff(playerid, 50000014,1, 8*20);
+        for i=1,20 do 
+            RUNNER.NEW(function(playerid,i)
+                local dx,dy,dz = getDir(playerid);
+                dash(playerid,dx/i,dy/i,dz/i)
+            end,{playerid,i},i)
+        end 
+        RUNNER.NEW(function(playerid,adix,adiy,adiz)
+            local x,y,z = getPos(playerid);
+            local dis = calculate_distance(adix,adiy,adiz,x,y,z); 
+            reduceCD(playerid,1,dis*20);
+            reduceCD(playerid,2,dis*10); 
+        end,{playerid,adix,adiy,adiz},21);
+    end 
+}
 act.empty={
     CD=0.1,    Cost=0,    main=function(playerid)
     Player:openUIView(playerid,"7382967083985475826");          

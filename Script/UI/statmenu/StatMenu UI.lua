@@ -35,33 +35,41 @@ end
 ftoexec.HP_UP = function(playerid)
     if(IncreaseStat(playerid,"SKILL_HP_POINT",1))then 
         Player:notifyGameInfo2Self(playerid,"Succesfully Upgrade Max HP");
+        return true ;
     else 
         Player:notifyGameInfo2Self(playerid,"Not Enough Skill Point to Upgrade Max HP");
         askforBoostExp(playerid);
+        return false ;
     end 
 end;
 ftoexec.MP_UP = function(playerid)
     if(IncreaseStat(playerid,"SKILL_MP_POINT",1))then 
         Player:notifyGameInfo2Self(playerid,"Succesfully Upgrade Max Mana");
+        return true ;
     else 
         Player:notifyGameInfo2Self(playerid,"Not Enough Skill Point to Upgrade Max Mana");
         askforBoostExp(playerid);
+        return false ;
     end 
 end;
 ftoexec.PA_UP = function(playerid)
     if(IncreaseStat(playerid,"SKILL_ATK_POINT",1))then 
         Player:notifyGameInfo2Self(playerid,"Succesfully Upgrade Physical Atk");
+        return true ;
     else 
         Player:notifyGameInfo2Self(playerid,"Not Enough Skill Point to Upgrade Physical Atk");
         askforBoostExp(playerid);
+        return false ;
     end 
 end;
 ftoexec.MA_UP = function(playerid)
     if(IncreaseStat(playerid,"SKILL_MATK_POINT",1))then 
         Player:notifyGameInfo2Self(playerid,"Succesfully Upgrade Magic Atk");
+        return true ;
     else 
         Player:notifyGameInfo2Self(playerid,"Not Enough Skill Point to Upgrade Magic Atk");
         askforBoostExp(playerid);
+        return false ;
     end 
 end;
 
@@ -81,8 +89,9 @@ ScriptSupportEvent:registerEvent([[UI.Button.Click]],function(e)
     for i,a in pairs(btn) do 
         -- print(btn);
         if a == ebtn then
-            ftoexec[i](playerid);
-            LoadStat(playerid);
+            if(ftoexec[i](playerid))then 
+                LoadStat(playerid);
+            end 
         end 
     end 
     -- Test if local UI script can call global variables or not
