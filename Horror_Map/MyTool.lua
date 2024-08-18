@@ -81,7 +81,7 @@ end
 
 MYTOOL.getDir = function(playerid)
     local pX, pY, pZ = MYTOOL.GET_POS(playerid)
-    local dX, dY, dZ = MYTOOL.getAimPos(playerid)
+    local dX, dY, dZ = MYTOOL.GET_AIM_POS_PLAYER(playerid)
     local dirX, dirY, dirZ = dX - pX, dY - pY, dZ - pZ
     local magnitude = math.sqrt(dirX^2 + dirY^2 + dirZ^2)
     return dirX / magnitude, dirY / magnitude, dirZ / magnitude
