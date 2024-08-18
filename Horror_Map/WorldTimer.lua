@@ -2,7 +2,7 @@ MYWORLD = {};
 MYWORLD.Second = 0;
 MYWORLD.DAY = 0;
 MYWORLD.BUFF_TORCH = 50000000;
-MYWORLD.LIGHT_RENDER_LEN = 5 ; 
+MYWORLD.LIGHT_RENDER_LEN = 4 ; 
 
 local function SpeedUpTimeWorld(speed) 
     local code  = World:SetTimeVanishingSpeed(speed);
@@ -31,7 +31,7 @@ MYWORLD.SET_PAUSE = function()
     World:SetTimeVanishingSpeed(0);
 end
 
-MYWORLD.Duration_Of_Day = 240; --[[ 4 Minutes]]
+MYWORLD.Duration_Of_Day = 360; --[[ 6 Minutes]]
 
 MYWORLD.Get_Seconds_Today = function()
     return math.fmod(MYWORLD.Second,MYWORLD.Duration_Of_Day);
@@ -43,7 +43,7 @@ MYWORLD.GET_LIGHT_BY_POS = function(x,y,z)
 end
 
 MYWORLD.TIME_TO_SET_DAY = 2 ;
-MYWORLD.TIME_TO_SET_NIGHT = 60 ;
+MYWORLD.TIME_TO_SET_NIGHT = 180 ;
 
 MYWORLD.Check_Event = function(seconds_today)
 
@@ -101,7 +101,7 @@ MYWORLD.RENDER_LIGHT = function(playerid)
     local bias = 2;
     local xp ,yp ,zp = MYTOOL.GET_POS(playerid);
     local xd ,yd ,zd = MYTOOL.getDir(playerid);
-    for i=MYWORLD.LIGHT_RENDER_LEN-3,MYWORLD.LIGHT_RENDER_LEN do 
+    for i=1,MYWORLD.LIGHT_RENDER_LEN do 
         local cx,cy,cz = xp+(xd*(i*bias)),   yp+(yd*i)+1.5, zp + (zd*(i*bias));
     -- store the calulcated coordinate 
         local light = {x=cx,y=cy,z=cz};
@@ -128,7 +128,7 @@ local function SetLightLevel(lightLevel,tableXYZ,pos,playerid)
             --Chat:sendSystemMsg("Light Didn't Moved")
             return false ;
         else 
-            local code = World:setBlockLightEx(xx, yy, zz, 0)   
+            local code = World:setBlockLightEx(xx, yy, zz, 0) ;
             --print(" Unset Success ");
         end 
     end 
@@ -146,7 +146,7 @@ MYWORLD.DO_RENDER_LIGHT = function()
         for playerid,light in pairs(MYWORLD.LIGHT_CONTAINER) do
             for i, v in pairs(light) do
                 --Chat:sendSystemMsg(" i = "..i);
-                local s,error = pcall(SetLightLevel,6,v,tonumber(i),tonumber(playerid));
+                local s,error = pcall(SetLightLevel,10-i,v,tonumber(i),tonumber(playerid));
                 if not s then 
                     print("Error [Do Render Light] : ",error);
                 end 

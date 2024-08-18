@@ -5,30 +5,20 @@ MYTOOL.GET_POS = function(actorid)
     if r then return x, y, z end
 end
 
-MYTOOL.GET_AIM_POS_PLAYER = function(obj)
+MYTOOL.getAimPos = function(obj)
     local r, x, y, z = Player:getAimPos(obj)
-    if r==0 then return x, y, z end
+    if r then return x, y, z end
 end
 
-MYTOOL.GET_EYE_POS_ACTOR = function(obj)
-    local r,x,y,z = Actor:getEyePosition(obj);
-    if r==0 then return x, y, z end 
-end
-
-MYTOOL.GET_DIR_ACTOR = function(obj)
-    local r,x,y,z = Actor:getFaceDirection(obj)
-    if r == 0 then return x,y,z end
-end
-
-MYTOOL.ADD_EFFECT = function(x, y, z, effectid, scale)
+MYTOOL.addEffect = function(x, y, z, effectid, scale)
     World:playParticalEffect(x, y, z, effectid, scale)
 end
 
-MYTOOL.DEL_EFFECT = function(x, y, z, effectid, scale)
+MYTOOL.cancelEffect = function(x, y, z, effectid, scale)
     World:stopEffectOnPosition(x, y, z, effectid, scale)
 end
 
-MYTOOL.DEALS_DAMAGE_2_AREA = function(playerid, x, y, z, dx, dy, dz, amount, dtype)
+MYTOOL.dealsDamageButNotHost = function(playerid, x, y, z, dx, dy, dz, amount, dtype)
     local r, areaid = Area:createAreaRect({x=x, y=y, z=z}, {x=dx, y=dy, z=dz})
     local r1, p = Area:getAreaPlayers(areaid)
     local r2, c = Area:getAreaCreatures(areaid)
@@ -43,7 +33,7 @@ MYTOOL.DEALS_DAMAGE_2_AREA = function(playerid, x, y, z, dx, dy, dz, amount, dty
     Area:destroyArea(areaid)
 end
 
-MYTOOL.DEALS_DAMAGE_2_AREA_WITH_BUFF = function(playerid, x, y, z, dx, dy, dz, amount, dtype, buffid, bufflv, customticks)
+MYTOOL.dealsDamageWithBuff = function(playerid, x, y, z, dx, dy, dz, amount, dtype, buffid, bufflv, customticks)
     MYTOOL.dealsDamageButNotHost(playerid, x, y, z, dx, dy, dz, amount, dtype)
     local r, areaid = Area:createAreaRect({x=x, y=y, z=z}, {x=dx, y=dy, z=dz})
     local r1, p = Area:getAreaPlayers(areaid)
@@ -81,7 +71,7 @@ end
 
 MYTOOL.getDir = function(playerid)
     local pX, pY, pZ = MYTOOL.GET_POS(playerid)
-    local dX, dY, dZ = MYTOOL.GET_AIM_POS_PLAYER(playerid)
+    local dX, dY, dZ = MYTOOL.getAimPos(playerid)
     local dirX, dirY, dirZ = dX - pX, dY - pY, dZ - pZ
     local magnitude = math.sqrt(dirX^2 + dirY^2 + dirZ^2)
     return dirX / magnitude, dirY / magnitude, dirZ / magnitude
@@ -119,7 +109,7 @@ MYTOOL.getStat = function(playerid)
     return PLAYER_DAT.OBTAIN_STAT(playerid)
 end
 
-MYTOOL.getObj_Area = function( x, y, z, dx, dy, dz)
+MYTOOL.getObj_Area = function(playerid, x, y, z, dx, dy, dz)
     local res = {}
     for i = 1, 4 do
         local r, t = Area:getAllObjsInAreaRange({x=x-dx, y=y-dy, z=z-dz}, {x=x+dx, y=y+dy, z=z+dz}, i)
@@ -153,6 +143,37 @@ MYTOOL.in2per = function(o, p)
     return math.max(1, math.floor(o * p / 100))
 end
 
+MYTOOL.Vector3 = function(x, y, z)
+    return {x = x, y = y, z = z}
+end
+
+MYTOOL.length = function(v)
+    return math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
+end
+
+MYTOOL.normalize = function(v)
+    local len = MYTOOL.length(v)
+    return MYTOOL.Vector3(v.x / len, v.y / len, v.z / len)
+end
+
+MYTOOL.crossProduct = function(a, b)
+    return MYTOOL.Vector3(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    )
+end
+
+MYTOOL.getRightDirection = function(forward)
+    local up = MYTOOL.Vector3(0, 1, 0)
+    local right = MYTOOL.crossProduct(forward, up)
+    return MYTOOL.normalize(right)
+end
+
+MYTOOL.getLeftDirection = function(forward)
+    local right = MYTOOL.getRightDirection(forward)
+    return MYTOOL.Vector3(-right.x, -right.y, -right.z)
+end
 
 MYTOOL.playSoundOnActor = function(actorid, soundId, volume, pitch)
     if not pitch then pitch = 1 end
@@ -175,18 +196,4 @@ MYTOOL.mergeTables = function(table1, table2)
         end
     end
     return mergedTable
-end
-
-MYTOOL.ActorDmg2Player = function(o1,o2,dmg,typedmg)
-    local r = Actor:actorHurt(o1,o2,dmg,typedmg);
-    if r == 0 then return true else return false end 
-end
-
--- This function return a obje
-MYTOOL.SHOOT_PROJECTILE = function(shooter,itemProjectileId,tPos,dPos,speed)
-    local itemid = itemProjectileId;
-    local x,y,z = tPos.x,tPos.y,tPos.z ;
-    local dstx,dsty,dstz = dPos.x,dPos.y,dPos.z;
-    local code, objid = World:spawnProjectile(shooter, itemid, x, y, z, dstx, dsty, dstz, speed)
-    if code == 0 then return objid end 
 end
