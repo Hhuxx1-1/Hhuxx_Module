@@ -1,0 +1,19 @@
+#WCode : K-182 
+Subject : #GKoala#W
+Result : #RFailed#W
+Effect : Superspeed
+
+#WCode : R-212
+Subject : #YRabit#W
+Result : #GSuccess#W
+Effect : Super Hearing, Super Intelegent
+
+#WCode : D-001
+Subject : #YDeer#W
+Result : #YPending#W
+Effect : None
+
+#WCode : M-401
+Subject : #YMonkey#W
+Result : #GSuccess#W
+Effect : Body Strength

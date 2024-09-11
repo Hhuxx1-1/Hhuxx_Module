@@ -664,7 +664,6 @@ ScriptSupportEvent:registerEvent("Player.DefeatActor",function (e)
     end 
 end)
 
-
 --Init
 ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
     threadpool:wait(1);
