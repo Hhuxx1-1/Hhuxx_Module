@@ -7,7 +7,7 @@ local interact_data_mt = {
             if data ~= nil then
                 return {f = data.f or false, a = data.a or {}}
             else
-                print("Data unset")
+                print("index "..key.."Data unset")
                 return {f = false, a = {}}
             end
         end 
@@ -37,18 +37,36 @@ ScriptSupportEvent:registerEvent("UI.Button.TouchBegin",function(e)
     local elementid = e.uielement;
     if elementid == INTERACTIVE_UI["btn"] then 
         local state,obj = getPlayerState(playerid);
-        local r ,IDs=Creature:getActorID(obj);
-        local data = INTERACT_DATA[IDs]
-        if data ~= nil then
-            local f,a = data.f,data.a
-            if f ~= false then 
-                local r,err = pcall(f,{playerid=playerid,state=state,obj=obj,IDs=IDs},a)
-                if not r then 
-                    print("#RError when ["..playerid.."] Interacting with :",obj,"as [",IDs,"] Error :",err);
+        if state == "M" then 
+            local r ,IDs=Creature:getActorID(obj);
+            
+            local data = INTERACT_DATA[IDs]
+            if data ~= nil then
+                local f,a = data.f,data.a
+                if f ~= false then 
+                    local r,err = pcall(f,{playerid=playerid,state=state,obj=obj,IDs=IDs},a)
+                    if not r then 
+                        print("#RError when ["..playerid.."] Interacting with :",obj,"as [",IDs,"] Error :",err);
+                    end 
                 end 
+            else    
+                Player:notifyGameInfo2Self(playerid,"Object Interaction Not Set")
             end 
-        else    
-            Player:notifyGameInfo2Self(playerid,"Object Interaction Not Set")
+
+        elseif state == "P" then
+
+            local data = INTERACT_DATA[obj]
+            if data ~= nil then
+                local f,a = data.f,data.a
+                if f ~= false then 
+                    local r,err = pcall(f,{playerid=playerid,state=state,obj=obj,IDs=IDs},a)
+                    if not r then 
+                        print("#RError when ["..playerid.."] Interacting with :",obj,"as [",IDs,"] Error :",err);
+                    end 
+                end 
+            else    
+                Player:notifyGameInfo2Self(playerid,"Object Interaction Not Set")
+            end 
         end 
     end 
 end)

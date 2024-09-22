@@ -3,10 +3,11 @@ MYWORLD.Second = 0;
 MYWORLD.DAY = 0;
 MYWORLD.BUFF_TORCH = 50000000;
 MYWORLD.LIGHT_RENDER_LEN = 4 ; 
-
+MYWORLD.IsStarted=false;
 local function SpeedUpTimeWorld(speed) 
     local code  = World:SetTimeVanishingSpeed(speed);
 end 
+MYWORLD.Increment = 1;
 
 MYWORLD.CUR_ACTION = {} ;
 
@@ -31,7 +32,7 @@ MYWORLD.SET_PAUSE = function()
     World:SetTimeVanishingSpeed(0);
 end
 
-MYWORLD.Duration_Of_Day = 360; --[[ 6 Minutes]]
+MYWORLD.Duration_Of_Day = 400; --[[ 6.6 Minutes]]
 
 MYWORLD.Get_Seconds_Today = function()
     return math.fmod(MYWORLD.Second,MYWORLD.Duration_Of_Day);
@@ -42,8 +43,8 @@ MYWORLD.GET_LIGHT_BY_POS = function(x,y,z)
     if r == 0 then return light end ;
 end
 
-MYWORLD.TIME_TO_SET_DAY = 2 ;
-MYWORLD.TIME_TO_SET_NIGHT = 180 ;
+MYWORLD.TIME_TO_SET_DAY = 280 ;
+MYWORLD.TIME_TO_SET_NIGHT = 2 ;
 
 MYWORLD.Check_Event = function(seconds_today)
 
@@ -185,11 +186,13 @@ ScriptSupportEvent:registerEvent("Game.RunTime",function(e)
     end 
     
     if e.second ~=nil then 
-        MYWORLD.Second = e.second ;
+        if(MYWORLD.IsStarted)then 
+        MYWORLD.Second = MYWORLD.Second + MYWORLD.Increment;
         -- Chat:sendSystemMsg("World Timelapse : "..MYWORLD.Second);
         local result,time=World:getHours()
         --Chat:sendSystemMsg("Time Today : "..MYWORLD.Get_Seconds_Today().." Hours  : "..time);
         MYWORLD.Check_Event(MYWORLD.Get_Seconds_Today());
+        end 
     end 
    
     MYWORLD.DO_RENDER_LIGHT();

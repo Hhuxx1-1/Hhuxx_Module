@@ -6,7 +6,7 @@ ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
     if(r==0)then 
         local inlangcode = tonumber(lc);
             if(inlangcode and inlangcode>=0)then  
-                playerSession[playerid]={lc=codeLang[lc+1],ar=""} or {lc="cn",ar=""}
+                playerSession[playerid]={lc=codeLang[lc+1],ar=""} or {lc="en",ar=""}
             else  
                 playerSession[playerid]={lc=lc,ar=ar};
             end

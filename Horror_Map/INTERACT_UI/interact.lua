@@ -3,6 +3,7 @@
 -- uipacket: 7404398618605197554
 --[[ REQUIRE MYTOOL FRAMEWORK --------------------------]]
 local StatePlayer = {};--Store the player State here 
+HIDE_INTERACTUI = {};
 
 function setPlayerState(player,state,obj)
     StatePlayer[player] = {state = state, obj = obj};
@@ -22,10 +23,19 @@ local function GetAllPlayer()
 end
 
 local function OPEN_UI(a)
-    Player:openUIView(a,INTERACTIVE_UI.uiid)--Open the interface for the player
+    if HIDE_INTERACTUI[a] then
+        Player:hideUIView(a,INTERACTIVE_UI.uiid)--hide the interface for the player
+    else 
+        Player:openUIView(a,INTERACTIVE_UI.uiid)--Open the interface for the player
+    end 
 end
 local function CLOSE_UI(a)
-    Player:hideUIView(a,INTERACTIVE_UI.uiid)--Open the interface for the player
+    Player:hideUIView(a,INTERACTIVE_UI.uiid)--hide the interface for the player
+end
+
+function FORCE_INTERACTIVITY_CLOSED(a,b)
+    HIDE_INTERACTUI[a] = b;
+    StatePlayer[a] = "I";
 end
 
 local function checkInteractivity(playerid)
@@ -107,6 +117,12 @@ local function getObjDesc(objid)
     end 
 end
 
+local function playerIsKnock(obj)
+    local buffKnock =   50000005;
+    local r , bool = Actor:hasBuff(obj,buffKnock)
+    if r == 0 then return true else return false end 
+end
+
 local function unsetDisplay(level,data)
     local playerid = data.p;
     if level == 1 then
@@ -147,6 +163,15 @@ local function getInteractivity(playerid)
     end 
     if status == "P" then 
         -- load info of player 
+        local r , stdesc = Player:getNickname(obj)
+        Customui:setText(playerid, INTERACTIVE_UI.uiid, INTERACTIVE_UI["desc"], stdesc)
+        -- check if player injured or not 
+        if playerIsKnock(obj) then 
+            unsetDisplay(3,{p=playerid});
+            Customui:setText(playerid, INTERACTIVE_UI.uiid, INTERACTIVE_UI["btndes"], "Help")
+        else 
+            unsetDisplay(2,{p=playerid}); 
+        end 
     end 
     if status == "N" then 
         unsetDisplay(1,{p=playerid});
