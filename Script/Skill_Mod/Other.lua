@@ -28,7 +28,7 @@ ScriptSupportEvent:registerEvent("Block.Add",function(e)
 end)
 
 local before     =  {};
-local model_size =  {};
+local model_size =  {}; 
 -- ice bug 
 -- THIS part is to Fix Ice Bug
 

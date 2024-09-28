@@ -14,7 +14,7 @@ local function playSoundOnPos(x,y,z,whatsound,volume)
     World:playSoundEffectOnPos({x=x,y=y,z=z}, whatsound, volume, 1, false)
 end 
 
-local data_guide = {}
+data_guide = {}
 function generateGuideArrow (playerid,data)
     -- check if data is table contain x,y,z 
     if(data.x and data.y and data.z)then 
@@ -31,7 +31,7 @@ function generateGuideArrow (playerid,data)
 
     if data.clear then 
         print(data_guide[playerid]);
-        Graphics:removeGraphicsByObjID(playerid, 1, data_guide[playerid].info.Type);
+        Graphics:removeGraphicsByObjID(playerid, 1, data_guide[playerid].info.Type or 4);
     end 
 end 
 local function generateHintLight(x,y,z,bol)
@@ -60,6 +60,9 @@ INTERACT_DATA_NAME.SET(3,"Lit Fire"); INTERACT_DATA(3,function(d1,d2)
                 -- QUEST 1 : Lit The Firecamp;
                 -- Accessing The Var to Set it; 
                 QUEST_GLOBAL().Var("Lit_Fire",true,"SET");
+                for i,a in ipairs(GetAllPlayer()) do 
+                    generateGuideArrow(a,{clear = true});
+                end 
                 -- Quest Finished
             end 
         else 
@@ -67,7 +70,7 @@ INTERACT_DATA_NAME.SET(3,"Lit Fire"); INTERACT_DATA(3,function(d1,d2)
             Chat:sendSystemMsg("Check the Nearby Tent...",playerid);
             -- Show hint to player 
             -- Generate Arrow to player to direct them to light match position 
-            local hx,hy,hz = -11,7,-34;
+            local hx,hy,hz = -10,8,-19;
             generateGuideArrow(playerid,{x=hx,y=hy,z=hz});
             generateHintLight(hx+0.5,hy+0.5,hz+0.5,true);
         end 
@@ -252,8 +255,11 @@ INTERACT_DATA_NAME.SET(17,"Turn On"); INTERACT_DATA(17,function(d1,d2)
             end 
         end 
     end 
-
-    if dieselProggress >= 10 then 
+    local diesel_Required = 5
+        if #GetAllPlayer() > 2 then
+            diesel_Required = 10;
+        end 
+    if dieselProggress >= diesel_Required then 
         switchOn(obj);
         local p = QUEST_GLOBAL().Var("switchOn");
         Actor:playAct(obj,18);

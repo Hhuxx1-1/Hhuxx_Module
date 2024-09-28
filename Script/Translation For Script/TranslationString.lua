@@ -1,18 +1,24 @@
 playerSession = {}
-ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
-    local playerid = e.eventobjid;
+
+LANGUAGE_UPDATE = function(playerid)
     local r,lc,ar = Player:GetLanguageAndRegion(playerid);
     local codeLang = {"en", "cn", "tw", "tha", "esn", "ptb", "fra", "jpn", "ara", "kor", "vie", "rus", "tur", "ita", "ger", "ind", "msa"};
     if(r==0)then 
         local inlangcode = tonumber(lc);
             if(inlangcode and inlangcode>=0)then  
-                playerSession[playerid]={lc=codeLang[lc+1],ar=""} or {lc="en",ar=""}
+                if lc < 1 then lc = 1 else lc = lc + 1 end ;
+                playerSession[playerid]={lc=codeLang[lc],ar=""} or {lc="en",ar=""}
             else  
                 playerSession[playerid]={lc=lc,ar=ar};
             end
         else 
         playerSession[playerid]={lc="en",ar="EN"};
     end 
+end 
+
+ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
+    local playerid = e.eventobjid;
+    LANGUAGE_UPDATE(playerid);
     print(playerSession);
 end)
 

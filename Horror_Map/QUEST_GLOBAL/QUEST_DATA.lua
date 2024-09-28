@@ -94,26 +94,6 @@ local function do_standby()
     end)
 end
 
-function generateGuideArrow (playerid,data)
-    -- check if data is table contain x,y,z 
-    if(data.x and data.y and data.z)then 
-        local graphinfo = Graphics:makeGraphicsArrowToPos(data.x,data.y,data.z, 0.6, 0xff0000, 1);
-        local r,graphid = Graphics:createGraphicsArrowByActorToPos(tonumber(playerid), graphinfo, {x=0,y=10,z=0}, 10);
-        data_guide[playerid] = {info = graphinfo , graphid = graphid};
-    end 
-    -- check if data is table contain objectid
-    if(data.objectid)then 
-        local graphinfo = Graphics:makeGraphicsArrowToActor(data.objectid, 0.6, 0xff0000, 1);
-        local r,graphid = Graphics:createGraphicsArrowByActorToActor(tonumber(playerid), graphinfo, {x=0,y=10,z=0}, 10);
-        data_guide[playerid] = {info = graphinfo , graphid = graphid};
-    end 
-
-    if data.clear then 
-        print(data_guide[playerid]);
-        Graphics:removeGraphicsByObjID(playerid, 1, data_guide[playerid].info.Type);
-    end 
-end 
-
 local function winGame()
     local x,y,z = 223,11,-26;
     local lithiumblock = 415 ;
@@ -124,14 +104,14 @@ local function winGame()
         hideGameplayUI()
         for i,a in ipairs(GetAllPlayer()) do 
             Actor:tryNavigationToPos(a,tx+10,ty,tz, false, false)
-            local code  = Player:SetCameraMountPos(a, {x=tx,y=ty,z=tz});
+            local code  = Player:SetCameraMountPos(a, {x=tx,y=ty+1,z=tz});
             local code  = Player:SetCameraRotTransformTo(a,{x=90,y=-15},1,2)
-            Player:setGameResults(a,1);
             RUNNER.NEW(function()
                 local code  = Player:SetCameraRotTransformTo(a,{x=89,y=-16},1,8)
                 RUNNER.NEW(function()
+                    Player:setGameResults(a,1);
                     Game:doGameEnd();
-                end,{},200)
+                end,{},220)
             end,{},40)
         end 
     end,{},5)
@@ -144,7 +124,7 @@ local function doLastQuest()
             QUEST_GLOBAL().Var("IntoTheGate",TimeNow,"SET");
         end 
         local sss = TimeNow  - tonumber(QUEST_GLOBAL().Var("IntoTheGate"));
-        local expectedEnd = 270;
+        local expectedEnd = 260;
         if sss >  expectedEnd then 
             -- Time out HQ lost Connection forever to the Agent and they abandoned 
             displayGlobalQuestText("HQ Lost Connection to the Agent and they abandoned the mission");
@@ -383,16 +363,22 @@ local function do_1stQuest()
                 end 
             end 
         end 
-        if(proggressNow < 10)  then
-            displayGlobalQuestText("Use mechanical parts to fix the generator ","  ( "..proggressNow.." / 10 Generator )");
+        -- Check Total Player Number 
+        -- if player is less than 3 Diesel Generator Required is just 5 
+        local diesel_Required = 5
+        if #GetAllPlayer() > 2 then
+            diesel_Required = 10;
+        end 
+        if(proggressNow < diesel_Required)  then
+            displayGlobalQuestText("Use mechanical parts to fix the generator ","  ( "..proggressNow.." / "..diesel_Required.." Generator )");
             toogleProggressBarQuest(true);
-            updateProggressBarQuest(proggressNow,10)
+            updateProggressBarQuest(proggressNow,diesel_Required)
             return false;
         else 
             return true;
         end 
         if proggressNow > 3 then 
-            SPAWNER_SET_INTERVAL(150-(proggressNow*8));
+            SPAWNER_SET_INTERVAL(120-(proggressNow*8));
         end 
     end,function()
         generatorQuestCompleted();
@@ -594,6 +580,9 @@ end, function()
     -- Action to take when the global quest condition is true
     RUNNER.NEW(function()
         fireCampCutscene()
+        for i,a in ipairs(GetAllPlayer()) do 
+            generateGuideArrow(a,{clear=true})
+        end 
     end,{},1);
     do_standby();
 end)

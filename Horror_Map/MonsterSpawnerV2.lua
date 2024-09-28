@@ -6,7 +6,7 @@ local function rakeSetSpawned(a)
     table.insert(RakeSpawned,a);
 end 
 
-local spawnCooldown = {};
+spawnCooldown = {};
 local SpawnInterval = 360;
 
 function SPAWNER_SET_INTERVAL(v)

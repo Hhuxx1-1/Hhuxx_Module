@@ -209,11 +209,13 @@ DIESEL_GENERATOR = {
                             cancelEffect(x,y+1,z,1308,1)
                         end,{},20)
                     end 
+
                 end
 
                 -- Update the UI for each repairman (player) based on the current repair progress
                 for playerid,_ in pairs(DIESEL_GENERATOR.DATA[obj].repairmen) do
                     updateDieselBarUI(playerid, DIESEL_GENERATOR.DATA[obj].repair_status)
+                    local prs  = math.floor(DIESEL_GENERATOR.DATA[obj].repair_status*100);
                     if DIESEL_GENERATOR.DATA[obj].repair_status > 10 then 
                         if math.random(1,200) < 5 then 
                             if IS_BOOSTING_ENABLED[playerid] == nil or IS_BOOSTING_ENABLED[playerid] == false then 
@@ -222,6 +224,9 @@ DIESEL_GENERATOR = {
                                 openBoostUI(playerid,obj);
                                 end 
                             end 
+                        end 
+                        if math.fmod(prs,920) == 0 then 
+                            spawnCooldown[playerid] = spawnCooldown[playerid] - 20;  
                         end 
                     end 
                 end
