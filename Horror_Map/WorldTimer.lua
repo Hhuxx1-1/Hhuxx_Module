@@ -56,6 +56,8 @@ MYWORLD.Check_Event = function(seconds_today)
     if (seconds_today == MYWORLD.TIME_TO_SET_DAY+9) then
         MYWORLD.SET_PAUSE();
         --Chat:sendSystemMsg("Day Paused")
+        -- set the time to 12 
+        World:setHours(12);
     end 
 
     if (seconds_today == MYWORLD.TIME_TO_SET_NIGHT) then

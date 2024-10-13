@@ -2,7 +2,7 @@ playerSession = {}
 
 LANGUAGE_UPDATE = function(playerid)
     local r,lc,ar = Player:GetLanguageAndRegion(playerid);
-    local codeLang = {"en", "cn", "tw", "tha", "esn", "ptb", "fra", "jpn", "ara", "kor", "vie", "rus", "tur", "ita", "ger", "ind", "msa"};
+    local codeLang = {"tw", "en", "cn", "tha", "esn", "ptb", "fra", "jpn", "ara", "kor", "vie", "rus", "tur", "ita", "ger", "ind", "msa"};
     if(r==0)then 
         local inlangcode = tonumber(lc);
             if(inlangcode and inlangcode>=0)then  

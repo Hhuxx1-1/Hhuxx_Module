@@ -298,6 +298,7 @@ local function do_2nd_quest()
             proggress = 0 ;
         end 
         if(proggress < 2)  then
+            QUEST_GLOBAL().Var("LeverSwitch","TRUE","SET")
             displayGlobalQuestText("Turn on Both Main Generator and Tower","  ( "..proggress.." / 2 )");
             toogleProggressBarQuest(true);
             updateProggressBarQuest(proggress,2)

@@ -1,0 +1,24 @@
+ 
+-- -- You Need to Create the Catalog 
+-- -- Avoid using Auto for description becuz it is too long 
+GLOBAL_SHOP:AddCatalogItem(100,"AUTO","AUTO","AUTO",2,0)
+GLOBAL_SHOP:AddCatalogItem(101,"AUTO","AUTO","AUTO",2,0)
+GLOBAL_SHOP:AddCatalogItem(102,"AUTO","AUTO","AUTO",2,0)
+GLOBAL_SHOP:AddCatalogItem(200,"AUTO","AUTO","AUTO",3,0)
+GLOBAL_SHOP:AddCatalogItem(300,"AUTO","AUTO","AUTO",4,0)
+
+-- -- We Need to Create the Shoplist and there is only 2 Item are on Catalog ! 
+
+GLOBAL_SHOP:InitiateShopList(1,{
+    {id = 100, stock = 10},
+    {id = 101, stock = 10},
+    {id = 102, stock = 10},
+    {id = 200, stock = 20},
+    {id = 300, stock = 20},
+})
+
+-- Creating NPC should be When Game.Start not Before Game Start 
+-- -- This to Avoid bug
+ScriptSupportEvent:registerEvent("Game.Start",function(e) 
+    GLOBAL_SHOP:CreateNPCShop({x=0,y=8,z=0},2,{shopid = 1,typeShop = GLOBAL_SHOP.TYPE.Dynamic})    
+end)

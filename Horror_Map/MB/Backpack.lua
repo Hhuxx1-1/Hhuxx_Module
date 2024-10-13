@@ -58,9 +58,19 @@ local function makeDropItem(playerid,itemid,actorid)
     -- To Do Later 
 end
 
-GLOBAL_BACKPACK.DROP_ITEM = function(playerid,slot)
+GLOBAL_BACKPACK.DROP_ITEM_By_LEAVE = function(playerid,x,y,z)
+    if not GLOBAL_BACKPACK.DATA[playerid] then
+        return false -- No items in the player's backpack yet
+    end
     -- store the player data before removing it from the table to be used as drop Item.
     local playerData = GLOBAL_BACKPACK.DATA[playerid]
+    for _ , item in ipairs(playerData) do 
+        -- create actorid for each player Data 
+        local r , obj = World:spawnCreature(x,y,z,item.actorid,1) 
+    end 
+    -- clear  the player data from the table
+    GLOBAL_BACKPACK.DATA[playerid] = nil;
+    return true;  -- Item dropped successfully
 end
 
 GLOBAL_BACKPACK.IsItemInBackpack = function(playerid, itemid)

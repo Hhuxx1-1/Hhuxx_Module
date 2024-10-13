@@ -101,6 +101,7 @@ ScriptSupportEvent:registerEvent([[UI.Show]],function(e)
     --print("A UI Opened",e);
     local playerid = e.eventobjid; 
     if uiid == e.CustomUI then 
+        HIDE_GIMMICK_BTN(playerid) ;
         -- change the camera to front view
         Player:changeViewMode(playerid, 2, false)
         if playerSelection[playerid] == nil then 
@@ -108,6 +109,14 @@ ScriptSupportEvent:registerEvent([[UI.Show]],function(e)
         end 
         loadForPlayer(playerid);
         loadSkin(playerid,playerSelection[playerid]);
+    end 
+end)
+
+ScriptSupportEvent:registerEvent([[UI.Hide]],function(e)
+    --print("A UI Opened",e);
+    local playerid = e.eventobjid; 
+    if uiid == e.CustomUI then 
+        SHOW_GIMMICK_BTN(playerid) ;
     end 
 end)
 

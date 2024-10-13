@@ -259,7 +259,7 @@ INTERACT_DATA_NAME.SET(17,"Turn On"); INTERACT_DATA(17,function(d1,d2)
         if #GetAllPlayer() > 2 then
             diesel_Required = 10;
         end 
-    if dieselProggress >= diesel_Required then 
+    if dieselProggress >= diesel_Required or QUEST_GLOBAL().Var("LeverSwitch") == "TRUE" then 
         switchOn(obj);
         local p = QUEST_GLOBAL().Var("switchOn");
         Actor:playAct(obj,18);
@@ -292,3 +292,10 @@ INTERACT_DATA_NAME.SET(20,"Pick Up"); INTERACT_DATA(20,function(d1,d2)
         Player:notifyGameInfo2Self(playerid,"#Y"..T_Text(playerid,"Cannot Carry More Medkit"));
     end 
 end,{itemid=4131})
+
+--[[ Laptop ]]
+INTERACT_DATA_NAME.SET(23,"Look At Screen"); INTERACT_DATA(23,function(d1,d2)
+    local playerid,obj,IDs,state = exact(d1);
+    Player:openUIView(playerid,"7420374329283254514")
+end,{})
+
