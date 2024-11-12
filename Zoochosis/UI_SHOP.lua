@@ -12,41 +12,8 @@ GLOBAL_SHOP = {} -- Initaite the Global Shop
 --      But the time i write this Message the Webiste is Not Done Yet 
 -- ============================== Thank you for your Respect ==========]]] 
 -- Adding Global _ Shop Catalog to Hold Items data 
-GLOBAL_SHOP.CATALOG = {};
-GLOBAL_SHOP.VSHOP = {}; -- a shop that sync between NPC 
-GLOBAL_SHOP.NPC_VSHOP = {}; -- npc that holds VSHOP
--- So The Way Shop Initiated is same  for both type of shop 
-GLOBAL_SHOP.ShopLists = {}
--- Only Allowing 1 Player interacting 1 NPC  at a time 
-GLOBAL_SHOP.NPCs_Player = {};
--- === Now lets Working on Shop Logic and Interaction === 
+GLOBAL_SHOP.CATALOG = {}
 
-GLOBAL_SHOP.NPC_DATA = {} -- This will Hold Data about NPC and Items it Sell. 
--- Different NPC can have different Price based on Discount General( it has )
---  Some NPC offers only Discount on Specific Items 
---  Some NPC has More Stock on Specific Items 
---  Yes NPC have Stock for each items type they sell 
---  For this type of NPC maximum Items Type they sell is only 4 
---  There is Also NPC with Unlimited Items but limited Stock  
---  So there is 2 type of Shop we will be making 
---  1 is Shop that has Discounted Price Items and Limited Time and Limited Stock but only Selling 4 Different items 
---  And this type of shop allowing features for player to refresh it shop 
---  second Shop is that type of shop that has lot item can become pages displaying 6 items each pages with high stock 
---  and unlimited ammount of time we call the 2nd shop as Constant  Shop  and the other Shop is Dynamic Shop 
-GLOBAL_SHOP.TYPE = {
-     -- Unlimited Items but Limited Stock
-    Constant = {
-        Value = "Constant",
-        -- store data UI to load with constant  shop
-        UI = "7419963747589626098" -- let this blank for now 
-
-    },
-    -- Limited Items but Unlimited Stock
-    Dynamic = {
-        Value = "Dynamic",
-        UI = "7419275534915016946" -- let this blank for now 
-    }, 
-}
 -- Initiate Currency Icon Here 
 GLOBAL_SHOP.CURRENCY_ICON = {
     Coin =  [[8_1029380338_1727255966]]
@@ -133,17 +100,48 @@ end
 
 -- -- Example Usage 
 -- GLOBAL_SHOP:AddCatalogItem(100,"AUTO","AUTO","AUTO",2,0)
--- Bulk add 
---[[GLOBAL_SHOP:AddCatalogItems({
-    {100,"AUTO","AUTO","AUTO",2,1},{100,"AUTO","AUTO","AUTO",2,1},
-    });
-]]
+
 -- print(GLOBAL_SHOP.CATALOG);
 -- Working great 
+
+
+-- === Now lets Working on Shop Logic and Interaction === 
+
+GLOBAL_SHOP.NPC_DATA = {} -- This will Hold Data about NPC and Items it Sell. 
+-- Different NPC can have different Price based on Discount General( it has )
+--  Some NPC offers only Discount on Specific Items 
+--  Some NPC has More Stock on Specific Items 
+--  Yes NPC have Stock for each items type they sell 
+--  For this type of NPC maximum Items Type they sell is only 4 
+--  There is Also NPC with Unlimited Items but limited Stock  
+--  So there is 2 type of Shop we will be making 
+--  1 is Shop that has Discounted Price Items and Limited Time and Limited Stock but only Selling 4 Different items 
+--  And this type of shop allowing features for player to refresh it shop 
+--  second Shop is that type of shop that has lot item can become pages displaying 6 items each pages with high stock 
+--  and unlimited ammount of time we call the 2nd shop as Constant  Shop  and the other Shop is Dynamic Shop 
+GLOBAL_SHOP.TYPE = {
+     -- Unlimited Items but Limited Stock
+    Constant = {
+        Value = "Constant",
+        -- store data UI to load with constant  shop
+        UI = "7419963747589626098" -- let this blank for now 
+
+    },
+    -- Limited Items but Unlimited Stock
+    Dynamic = {
+        Value = "Dynamic",
+        UI = "7419275534915016946" -- let this blank for now 
+    }, 
+}
+
 
 --[[For the Dynamic is Using same Logic with Constant 
     which has set of Items but only Display 4 kinds of items from  the set of items 
     list and will randomize after refresh]]
+
+-- So The Way Shop Initiated is same  for both type of shop 
+
+GLOBAL_SHOP.ShopLists = {}
 
 -- 1st Create a Items Shop List to load for NPC later 
 function GLOBAL_SHOP:InitiateShopList(shopid,catalogIdList)
@@ -167,28 +165,6 @@ function GLOBAL_SHOP:InitiateShopList(shopid,catalogIdList)
     GLOBAL_SHOP.ShopLists[tostring(shopid)] = data;
 end 
 
-function GLOBAL_SHOP:InitVSHOP(VSHOP,ListStock)
-    -- itemlist is a list of id Item on Catalog (but just its ID)
-    -- Validate itemlist 
-    -- itemlist must contain these key id and stock 
-    local data = {};
-    for i,a in ipairs(ListStock) do 
-        -- check if name of Catalog is exist 
-        -- the key to access catalog is string 
-        if GLOBAL_SHOP.CATALOG[tostring(a.id)] ~= nil then 
-            data[i] = {
-                id = a.id,
-                stock = a.stock
-            }
-        else 
-            print("#cD21100","ID of ", a.id , " Is Not Exist on Catalog!");
-        end 
-    end 
-    GLOBAL_SHOP.VSHOP[tostring(VSHOP)] = data;
-    -- print("Successfully create VSHOP ", data);
-end 
-
-
 -- 2nd Assign the ShopList into ShopNpc 
 function GLOBAL_SHOP:AssignNPC(npc,shopid,typeShop,discount)
     npc = tostring(npc)
@@ -200,20 +176,11 @@ function GLOBAL_SHOP:AssignNPC(npc,shopid,typeShop,discount)
     end 
 end
 
--- Other Method 
-function GLOBAL_SHOP:AssignVSHOP(ModelID,VSHOP,typeShop,discount)
-    ModelID = tostring(ModelID)
-    VSHOP = tostring(VSHOP)
-    if  GLOBAL_SHOP.VSHOP[VSHOP] ~= nil then 
-        GLOBAL_SHOP.NPC_VSHOP[ModelID] = {VSHOP = VSHOP , discount = discount , typeShop = typeShop}
-    else 
-        print("#cD21100","VSHOP [", VSHOP , "] Is Not Exist!");
-    end 
-end
 -- 3rd Adding Method to Be Called when Player Interact with NPC 
 
 -- We Also Need a Holder for NPC that is being interacted by player 
-
+-- Only Allowing 1 Player interacting 1 NPC  at a time 
+GLOBAL_SHOP.NPCs_Player = {};
 
 local function showText(objid,title)
 	local font=35;	local alpha=30;	local itype=1;
@@ -247,8 +214,6 @@ function GLOBAL_SHOP:CreateNPCShop(pos,npcModel,data)
     setInvincible(obj[1]);
 end
 
--- Function to set NPC model ID as Shop 
-
 function GLOBAL_SHOP:LoadShopList(shoplist)
     local recon = {};
     if type(shoplist) == "table" then 
@@ -259,18 +224,6 @@ function GLOBAL_SHOP:LoadShopList(shoplist)
         end 
     end
     return recon 
-end 
-
-function GLOBAL_SHOP:IsVSHOP(NPC)
-    local r,modelID = Creature:getActorID(tonumber(NPC));
-    if r == 0 then  
-        print(" Tries Accessing Model id : ", modelID);
-        if GLOBAL_SHOP.NPC_VSHOP[tostring(modelID)] ~= nil then 
-            return GLOBAL_SHOP.NPC_VSHOP[tostring(modelID)]
-        end 
-    else 
-        print("Failed Getting Information at Actorid of "..NPC);
-    end 
 end 
 
 function GLOBAL_SHOP:IsNPCShop(NPC) 
@@ -304,24 +257,6 @@ function GLOBAL_SHOP:LoadShopFromNpc(playerid,npc)
     end 
 end 
 
-
-function GLOBAL_SHOP:LoadShopFromVSHOP(playerid,VSHOP)
-    -- this including Opening UI based on what NPC Shop Type 
-    -- This is the main function to be called when player interact with NPC
-        
-    local NPC_DATA = VSHOP;
-    if NPC_DATA ~= nil then
-        -- Check if Player already have Shop UI Opened Before Attempting to Do this and also Check for the NPC 
-            GLOBAL_SHOP.NPCs_Player[tostring(playerid)] = VSHOP
-            -- Obtain its TypeShop
-            -- local typeShop = NPC_DATA.typeShop
-            -- -- load UI based on typeShop
-            -- local r = Player:openUIView(playerid,typeShop.UI);
-            -- if r ~= 0 then print("#R[Error]Please Check if UI is Exist or Not"); end 
-    else 
-        print("Something is not Right")
-    end 
-end 
 -- -- lETS test it 
  
 -- -- You Need to Create the Catalog 
@@ -361,37 +296,13 @@ end
 --     GLOBAL_SHOP:CreateNPCShop({x=0,y=8,z=0},2,{shopid = 1,typeShop = GLOBAL_SHOP.TYPE.Dynamic})    
 -- end)
 
-CURRENT_VSHOP = {};
-
 -- Listen To Player Click on Actor 
 ScriptSupportEvent:registerEvent("Player.ClickActor",function(e)
     local playerid , NPC = e.eventobjid , e.toobjid 
     -- make the NPC face to Player 
-    local er,err = pcall(function()
-        local r , name = Creature:GetMonsterDefName(e.targetactorid);
-        if r ~= 0 then print("Error Failed to get Name from Actorid") end
-        -- check if name contain word "Car"
-        if not string.find(name,"Car") then
-            makeFace2(playerid,NPC)
-        end 
-    end)
+    makeFace2(playerid,NPC)
     -- Check if NPC has Shop 
-    local code,err = pcall(function()
-        if GLOBAL_SHOP:IsNPCShop(NPC) then
-            GLOBAL_SHOP:LoadShopFromNpc(playerid,NPC) 
-        else 
-            local VSHOP = GLOBAL_SHOP:IsVSHOP(NPC)
-            if VSHOP then 
-                CURRENT_VSHOP[playerid] = VSHOP;
-                GLOBAL_SHOP:LoadShopFromVSHOP(playerid,VSHOP)
-                -- instead we will Open Shop after the  player click on the NPC and open Dialog and click Shop Button ;
-            else
-                --print("VSHOP NOT FOUND");
-                CURRENT_VSHOP[playerid] = nil;
-            end 
-        end 
-    end)
-
-    if not code then  print("#R[SHOP] :",err,"#c000000") end
-
+    if GLOBAL_SHOP:IsNPCShop(NPC) then
+        GLOBAL_SHOP:LoadShopFromNpc(playerid,NPC)
+    end 
 end)

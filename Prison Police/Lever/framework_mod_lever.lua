@@ -1,5 +1,7 @@
 local IS_MODE_DEBUG = true ;
-
+-- modify if necessary 
+local police  = 2;
+local KeyCard = 4109;--[[id of item key card]]
 local test = function(...)
     if IS_MODE_DEBUG then 
         print(...)
@@ -19,8 +21,8 @@ GLOBAL_LEVER.TYPE = {
 GLOBAL_LEVER.ENCODE = function(x,y,z,b)
     -- convert x,y,z that could have negatif number into readable single string without losing the information 
     local x = "X"..string.gsub(tostring(x),"-","N")
-    local y = "Y"..string.gsub(tostring(x),"-","N")
-    local z = "Z"..string.gsub(tostring(x),"-","N")
+    local y = "Y"..string.gsub(tostring(y),"-","N")
+    local z = "Z"..string.gsub(tostring(z),"-","N")
     -- convert those redeclared x,y,z as string into single string 
     return x.." "..y.." "..z.." B"..b;
 end
@@ -45,7 +47,7 @@ end
 -- function to initiate  the global lever object 
 GLOBAL_LEVER.REGISTER = function(x,y,z,b,f,arg) 
     local id = GLOBAL_LEVER.ENCODE(x,y,z,b);
-    GLOBAL_LEVER.DATA[id] = { f = f , arg = arg}
+    GLOBAL_LEVER.DATA[tostring(id)] = { f = f , arg = arg}
 end 
 
 GLOBAL_LEVER.UNRAVEL = function(e)
@@ -83,11 +85,76 @@ GLOBAL_LEVER.OPEN_DOOR = function(x, y, z, id)
                 Block:setBlockAllForUpdate(x,dy+2,z, circuit.powerOff)
             end,{},50)
         else 
-            Block:setBlockAllForUpdate(x,dy+2,z, circuit.powerOff)
+            -- Block:setBlockAllForUpdate(x,dy+2,z, circuit.powerOff)
+            -- Ignore;
         end 
     end
 end
 
+local function checkCard(playerid)
+    for i=1,30 do 
+        local r,itemid = Backpack:getGridItemID(playerid, i-1);
+        if itemid == KeyCard then 
+            return true 
+        end 
+    end 
+    for i=1000,1007 do 
+        local r,itemid = Backpack:getGridItemID(playerid, i-1);
+        if itemid == KeyCard then 
+            return true 
+        end 
+    end 
+    return false;
+end
+
+function IF_HAS_ACCESS_CARD(playerid)
+    local r , team = Player:getTeam(playerid)
+    if r == 0 then 
+        -- success obtain team id 
+        if team == police then 
+            -- this is police team doesnt need key card to open door 
+            return true 
+        else 
+            -- check if it has keycard 
+            if checkCard(playerid) then 
+                return true
+            else
+                Player:notifyGameInfo2Self(playerid,"KeyCard is Required")
+                return false
+            end 
+        end 
+    end 
+end
+
+function TRY_SPAWN_CAR(x,y,z)
+    local r , blockid = Block:getBlockID(x, y-2, z)
+    local rr , data = Block:getBlockData(x, y, z)
+    if blockid == 40 then 
+        local r, itemid , n = WorldContainer:getStorageItem(x,y-3,z,0);
+        if r == 0 then 
+            local mobid = n ;
+            local offset = 7;
+            local LastCreated=0;
+            if data == 8 then 
+                local code,obj = World:spawnCreature(x+offset,y-1,z,mobid,1);
+                Actor:setFaceYaw(obj[1],90)
+            elseif data == 9 then
+                local code,obj = World:spawnCreature(x-offset,y-1,z,mobid,1);
+                Actor:setFaceYaw(obj[1],0)
+            elseif data == 10 then
+                local code,obj = World:spawnCreature(x,y-1,z+offset,mobid,1);
+                Actor:setFaceYaw(obj[1],180)
+            elseif data == 11 then
+                local code,obj = World:spawnCreature(x,y-1,z-offset,mobid,1);
+                Actor:setFaceYaw(obj[1],270)
+            end 
+        end 
+        local r = Block:setBlockAll(x,y-2,z,1)
+        RUNNER.NEW(function()
+            local r = Block:setBlockAll(x,y-2,z,40)
+        end,{},100)
+    end 
+end 
 
 -- Register a Script Api 
 -- Event for  the lever to be activated 
@@ -116,7 +183,8 @@ ScriptSupportEvent:registerEvent("Block.Trigger",function(e)
     --]=]
     local x,y,z,b,ev,uiid,msgStr = GLOBAL_LEVER.UNRAVEL(e);
     local id = GLOBAL_LEVER.ENCODE(x,y,z,b)   
-
+    -- Chat:sendSystemMsg(id);
+    -- print(id);
     -- check if GLOBAL_LEVER.DATA[id] is not nil 
     if GLOBAL_LEVER.DATA[id] then
         -- check if it has function stored with key f and pass it args
@@ -127,13 +195,18 @@ ScriptSupportEvent:registerEvent("Block.Trigger",function(e)
         end 
     else
         if b == GLOBAL_LEVER.TYPE.Stone_Button then 
-            for ox = -2 , 2 do 
-                for oz = -2 , 2 do 
-                    GLOBAL_LEVER.OPEN_DOOR(x+ox,y,z+oz,1101)
+            if IF_HAS_ACCESS_CARD(ev) then 
+                for ox = -2 , 2 do 
+                    for oz = -2 , 2 do 
+                        GLOBAL_LEVER.OPEN_DOOR(x+ox,y,z+oz,1101)
+                    end 
                 end 
             end 
         end 
-        Player:notifyGameInfo2Self(1029380338,"x = "..x.." y = "..y.." z = "..z.." is Not Set");
+        if b == GLOBAL_LEVER.TYPE.Wooden_Button then 
+            TRY_SPAWN_CAR(x,y,z);
+        end 
+        -- Player:notifyGameInfo2Self(1029380338,"x = "..x.." y = "..y.." z = "..z.." is Not Set");
     end 
 
     

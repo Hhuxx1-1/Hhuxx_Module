@@ -314,10 +314,10 @@ function GLOBAL_SHOP:LoadShopFromVSHOP(playerid,VSHOP)
         -- Check if Player already have Shop UI Opened Before Attempting to Do this and also Check for the NPC 
             GLOBAL_SHOP.NPCs_Player[tostring(playerid)] = VSHOP
             -- Obtain its TypeShop
-            -- local typeShop = NPC_DATA.typeShop
-            -- -- load UI based on typeShop
-            -- local r = Player:openUIView(playerid,typeShop.UI);
-            -- if r ~= 0 then print("#R[Error]Please Check if UI is Exist or Not"); end 
+            local typeShop = NPC_DATA.typeShop
+            -- load UI based on typeShop
+            local r = Player:openUIView(playerid,typeShop.UI);
+            if r ~= 0 then print("#R[Error]Please Check if UI is Exist or Not"); end 
     else 
         print("Something is not Right")
     end 
@@ -361,8 +361,6 @@ end
 --     GLOBAL_SHOP:CreateNPCShop({x=0,y=8,z=0},2,{shopid = 1,typeShop = GLOBAL_SHOP.TYPE.Dynamic})    
 -- end)
 
-CURRENT_VSHOP = {};
-
 -- Listen To Player Click on Actor 
 ScriptSupportEvent:registerEvent("Player.ClickActor",function(e)
     local playerid , NPC = e.eventobjid , e.toobjid 
@@ -382,12 +380,9 @@ ScriptSupportEvent:registerEvent("Player.ClickActor",function(e)
         else 
             local VSHOP = GLOBAL_SHOP:IsVSHOP(NPC)
             if VSHOP then 
-                CURRENT_VSHOP[playerid] = VSHOP;
                 GLOBAL_SHOP:LoadShopFromVSHOP(playerid,VSHOP)
-                -- instead we will Open Shop after the  player click on the NPC and open Dialog and click Shop Button ;
             else
-                --print("VSHOP NOT FOUND");
-                CURRENT_VSHOP[playerid] = nil;
+                print("VSHOP NOT FOUND");
             end 
         end 
     end)
@@ -395,3 +390,4 @@ ScriptSupportEvent:registerEvent("Player.ClickActor",function(e)
     if not code then  print("#R[SHOP] :",err,"#c000000") end
 
 end)
+

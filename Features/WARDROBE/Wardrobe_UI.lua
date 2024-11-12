@@ -1,13 +1,16 @@
 local uiid = [[7418777786860116210]] 
+local devGoodsId = 4109; --ID of item to pop up when player wanted to unlock skin this doesnt handle skin unlock logic 
 local UI = { 
     Btn = {
 
     left = uiid..[[_4]] , 
     right = uiid..[[_5]],
     wear = uiid..[[_1]],
+    textwear = uiid..[[_6]],
     close = uiid..[[_9]],
     prevpg = uiid..[[_29]],
-    nextpg = uiid..[[_27]]
+    nextpg = uiid..[[_27]],
+    getPerm = uiid..[[_34]]
     },
     selector = {
         [1] = uiid..[[_12]],
@@ -26,7 +29,8 @@ local UI = {
         [5] = uiid..[[_21]],
         [6] = uiid..[[_23]],
         [7] = uiid..[[_25]]
-    }
+    },
+    isLocked = uiid..[[_33]]
 }
 
 local playerSelection = {}
@@ -61,6 +65,16 @@ local function cancelSkin(playerid)
     Actor:changeCustomModel(playerid,originalskin[playerid])
 end
 
+local function skinUnlocked(playerid,i)
+    -- getInformationOn Player Global Wardobe Var Stored 
+    local data = GLOBAL_WARDOBE.LOAD_DATA(playerid)
+    if data[1] ~= "ALL_SKIN" then 
+        return false 
+    else 
+        return true 
+    end 
+end
+
 local function loadForPlayer(playerid)
     if #GLOBAL_WARDOBE.SKIN_DATA < playerSelection[playerid]+7 then 
         for  i = #GLOBAL_WARDOBE.SKIN_DATA , playerSelection[playerid] + 14 do 
@@ -84,6 +98,19 @@ local function loadForPlayer(playerid)
         -- Set the color: Highlight if currentIndex matches playerSelection, otherwise default color
         if currentIndex == playerSelection[playerid] then
             Customui:setColor(playerid, uiid, UI.selector[i], 0xf1ca1f)  -- Highlight color
+            -- check for current player selection
+            if skinUnlocked(playerid,i) then 
+                print("Skin is Unlocked");
+                Customui:setColor(playerid,uiid,UI.Btn.wear,0xffffff);
+                Customui:setText(playerid,uiid,UI.Btn.textwear,"Wear");
+                Customui:hideElement(playerid,uiid,UI.isLocked);
+            else
+                print("Skin is Locked");
+                -- show prompt item to buy the All skin Pass 
+                Customui:showElement(playerid,uiid,UI.isLocked);
+                Customui:setColor(playerid,uiid,UI.Btn.wear,0x8f9190)
+                Customui:setText(playerid,uiid,UI.Btn.textwear,"Locked");
+            end 
         else
             Customui:setColor(playerid, uiid, UI.selector[i], 0xffffff)  -- Default color
         end
@@ -123,9 +150,20 @@ end)
 ScriptSupportEvent:registerEvent([[UI.Button.Click]],function(e)
     local playerid,uiids,element = e.eventobjid,e.CustomUI,e.uielement;
     if uiid == uiids then 
+        -- if element == UI.Btn.getPerm then 
+        --     local code  = Player:openDevGoodsSkinBuyDialog(playerid,tostring(playerSelection[playerid]),"Unlock This Skin?")
+        --     if code then 
+        --         print(code)
+        --     end 
+        -- end 
         if element == UI.Btn.wear then 
             -- close the UI without reverting  the skin to original
-            Player:hideUIView(playerid,uiid)--Hide the interface for the player
+            if skinUnlocked(playerid,playerSelection[playerid]) then 
+                Player:hideUIView(playerid,uiid)--Hide the interface for the player
+            else 
+                Player:notifyGameInfo2Self(playerid,"Skin is Locked");
+                Player:openDevGoodsBuyDialog(playerid, devGoodsId, "Unlock All Skin on Wardobe Mod");
+            end 
         end 
         if element == UI.Btn.close then 
             Player:hideUIView(playerid,uiid)--Hide the interface for the player

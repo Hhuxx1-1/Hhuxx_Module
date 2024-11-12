@@ -14,6 +14,7 @@ RUNNER  = {};RUNNER.LIB={}; RUNNER.EVENT = {}; RUNNER.OBJECT = {}; RUNNER.DELAYE
 *****            This is LIST of Method To Use               ******
 ===================================================================
 ]]--
+RUNNER.CALL                     = function(f,args)              table.insert(RUNNER.EVENT,{f=f,args=args}); end ;
 RUNNER.NEW                      = function(f,args,delay)        local idEvent = #RUNNER.DELAYED_EVENT + 1;  table.insert(RUNNER.DELAYED_EVENT,idEvent,{f=f,args=args,delay=delay});    return idEvent; end;
 RUNNER.REVOKE                   = function(idEvent)             table.remove(RUNNER.DELAYED_EVENT,idEvent);end;
 RUNNER.Obj_REGISTER             = function(objectid,playerid)   RUNNER.OBJECT[objectid] = playerid; end;
@@ -47,6 +48,17 @@ RUNNER.EXECUTE_DELAYED_EVENT    = function(idEvent)
         end 
     end 
 end ; 
+RUNNER.EXECUTE                  = function(idEvent)    
+    local toExecute = RUNNER.EVENT[idEvent];    
+    local result = toExecute.f(unpack(toExecute.args));    
+    table.remove(RUNNER.EVENT,idEvent);  
+    return result; 
+end ; 
+    
+ScriptSupportEvent:registerEvent("Game.RunTime",function(e) 
+    if(RUNNER.LENGTH() > 0 )then  
+        for i,a in pairs(RUNNER.EVENT) do 
+            RUNNER.EXECUTE(i); end end end);
             
 ScriptSupportEvent:registerEvent("Game.RunTime",function(e) 
     if(RUNNER.DELAY_LENGTH() > 0 )then 
