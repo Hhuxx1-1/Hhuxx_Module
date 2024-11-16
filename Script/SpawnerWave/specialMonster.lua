@@ -8,6 +8,32 @@ BOSS.NONHOOKCD_RESET = {};
 BOSS.INIT = function(id, name)
     BOSS.ID[id] = {name = name , nonhook = {} , hook = {}}
 end
+BOSS.COUNTER_DATA = {};
+
+function BOSS.COUNTER(id, key, action, value)
+    -- Initialize data for the ID if it doesn't exist
+    if not BOSS.COUNTER_DATA[id] then
+        BOSS.COUNTER_DATA[id] = {}
+    end
+
+    -- Initialize the specific key if it doesn't exist
+    if not BOSS.COUNTER_DATA[id][key] then
+        BOSS.COUNTER_DATA[id][key] = 0
+    end
+
+    -- Handle different actions
+    if action == "ADD" then
+        BOSS.COUNTER_DATA[id][key] = BOSS.COUNTER_DATA[id][key] + value
+    elseif action == "SUBTRACT" then
+        BOSS.COUNTER_DATA[id][key] = BOSS.COUNTER_DATA[id][key] - value
+    elseif action == "SET" then
+        BOSS.COUNTER_DATA[id][key] = value
+    elseif action == "GET" then
+        return BOSS.COUNTER_DATA[id][key]
+    else
+        error("Invalid action: " .. tostring(action))
+    end
+end
 
 -- Function to add Action based on hook or non hook 
 -- [[Hook will be activated according to the Event Hook  ]]
@@ -190,7 +216,7 @@ end)
 -- BOSS.ADD_ACTION(1, function() print("Dragon spawned") end, "OnSpawn")
 
 BOSS.TOOL = {};
-BOSS.TOOL.ATTACk = function(id,tablePos,tableDim,dmgData)
+BOSS.TOOL.ATTACk = function(id,tablePos,tableDim,dmgData,vectorData)
     local x,y,z      = tablePos.x,tablePos.y,tablePos.z;
     local dx,dy,dz   = tableDim.x,tableDim.y,tableDim.z;
     local dmg        = dmgData.dmg or 5 ;
@@ -202,5 +228,10 @@ BOSS.TOOL.ATTACk = function(id,tablePos,tableDim,dmgData)
     OBJ = MYTOOL.mergeTables(playerObj,actorObj);
     for i ,a in ipairs(OBJ) do 
         MYTOOL.ActorDmg2Player(id,a,dmg,dmgType);
+        
+        if vectorData then 
+            local vx,vy,vz = vectorData.x,vectorData.y,vectorData.z
+            MYTOOL.dash(a,vx,vy,vz)
+        end 
     end 
 end

@@ -46,6 +46,18 @@ function CUTSCENE:endCutscene(playerid)
     CUTSCENE:removeDolls(playerid);
 end
 
+local function lockCameraAngle(playerid)
+    if Player:SetCameraRotMode(playerid, 4) ~= 0 then
+        Chat:sendSystemMsg("Failed to set Camera Rot Mode")
+    end
+end
+
+local function unlockCameraAngle(playerid)
+    if Player:SetCameraRotMode(playerid, 1) ~= 0 then
+        Chat:sendSystemMsg("Failed to set Camera Rot Mode")
+    end
+end
+
 -- Create and control the Camera Man actor for the cutscene
 function CUTSCENE:createCameraMan(playerid)
     -- Logic to create or position the Camera Man
@@ -54,9 +66,6 @@ function CUTSCENE:createCameraMan(playerid)
     local r,obj = World:spawnCreature(x,y,z,cameraman,1) 
     CUTSCENE.PLAYER_CAMERA[playerid] = obj[1];
     if Player:SetCameraMountObj(playerid,obj[1]) == 0 then 
-        if Player:SetCameraRotMode(playerid, 4) ~= 0 then
-            Chat:sendSystemMsg("Failed to set Camera Rot Mode")
-        end
         return CUTSCENE.PLAYER_CAMERA[playerid];
     else
         print("Fail to Mount Camera"); 
@@ -81,9 +90,11 @@ function CUTSCENE:createDoll(playerid, skin_ID , x,y,z)
 end
 
 function CUTSCENE:removeDolls(playerid)
-    for i,id in ipairs(CUTSCENE.DOLLS[playerid]) do 
-        World:despawnActor(id);
-    end
+    if CUTSCENE.DOLLS[playerid] then 
+        for i,id in ipairs(CUTSCENE.DOLLS[playerid]) do 
+            World:despawnActor(id);
+        end
+    end 
     CUTSCENE.DOLLS[playerid] = nil;
 end
 
@@ -114,6 +125,14 @@ function CUTSCENE:setrotCamera(x,y,t,playerid)
     Player:SetCameraRotTransformTo(playerid,{x=x,y=y}, 1,t);
 end
 
+function CUTSCENE:setText(playerid,text)
+    if T_Text then 
+        -- translation function available 
+        text = T_Text(playerid,text);
+    end 
+    Customui:setText(playerid,CUTSCENE.UI,CUTSCENE.UI.."_3",text);
+end
+
 -- Runtime Execution (Called every 1/20s or 0.05s)
 ScriptSupportEvent:registerEvent("Game.RunTime", function(e)
     if getTableLength(CUTSCENE.ACTIVE) > 0 then 
@@ -124,6 +143,11 @@ ScriptSupportEvent:registerEvent("Game.RunTime", function(e)
                 if funx and funx(playerid) then
                     -- If function returns true, cutscene is complete
                     CUTSCENE:endCutscene(playerid)
+                    if data["END"] then 
+                        threadpool:delay(1,function()
+                            data["END"](playerid)    
+                        end);
+                    end 
                 end
             end)
             if not success then

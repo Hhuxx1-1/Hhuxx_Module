@@ -207,10 +207,18 @@ function RunQuest(playerid,id,npc)
     end 
 end
 
+function HX_Q:CreatePointingArrowForPlayer(playerid,x,y,z)
+    -- RETURN IT'S id and Type 
+end 
+
+function HX_Q:DeletePointingArrowForPlayer(playerid,x,y,z,id)
+    
+end 
+
 local SelectedQuest = {};
 
 local function checkForAvailableQuest(playerid)
-    local CURRENT_NPC = HX_Q.CURRENT_NPC;
+    local CURRENT_NPC = HX_Q.CURRENT_NPC[playerid];
     if CURRENT_NPC then 
         local actorid,id = CURRENT_NPC.id , CURRENT_NPC.npc;
         if HX_Q.NPC_QUEST_DATA[actorid] then
@@ -267,7 +275,7 @@ local function OpenDialog(playerid,NPC)
 
         if r1 == 0 and r2 == 0 and r3 == 0 then 
             Player:openUIView(playerid,DIALOG_UI);
-            HX_Q.CURRENT_NPC = {id = modelID , npc = NPC};
+            HX_Q.CURRENT_NPC[playerid] = {id = modelID , npc = NPC};
         end 
         -- check for quest available 
         local code , err = pcall(function()
