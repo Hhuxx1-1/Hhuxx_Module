@@ -88,10 +88,14 @@ local function updateBossHPBar(objid, name, currentHP, maxHP)
     local h, w = 35, 600
     for _, playerid in ipairs(players) do
         -- Update the main (real-time) HP bar
+        if currentHP < 0 then 
+        Player:hideUIView(playerid, BossHP.UI)
+        else 
         Player:openUIView(playerid, BossHP.UI)
         Customui:SmoothScaleTo(playerid, BossHP.UI, BossHP.MainBar, 0.5, w * percentage, h)
         Customui:setText(playerid, BossHP.UI, BossHP.MainTextBar, math.floor(currentHP))
         Customui:setText(playerid, BossHP.UI, BossHP.MainName, name)
+        end 
     end
     lastUpdateTime[objid] = os.time()
     -- Delay clearing nickname only if not hit again

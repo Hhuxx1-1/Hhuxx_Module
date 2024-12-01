@@ -1,7 +1,7 @@
 local ID = 42
 
 BOSS.INIT(ID,"Lumina, The Protector Of Light");
-
+local LaserDamage = 10;
 local function createLaserCharge(nx,ny,nz,id,dur)
 
     MYTOOL.ADD_EFFECT(nx,ny,nz,1738,1.2);
@@ -13,7 +13,12 @@ local function createLaserCharge(nx,ny,nz,id,dur)
         MYTOOL.ADD_EFFECT(nx,ny-1,nz,1293,4);
         for s = 2,dur,6 do 
             RUNNER.NEW(function()
-                BOSS.TOOL.ATTACk(id,{x=nx,y=ny,z=nz},{x=2,y=12,z=2},{dmg=10,type=1},{x=0,y=0.3,z=0});
+                local HIT = BOSS.TOOL.ATTACk(id,{x=nx,y=ny,z=nz},{x=2,y=12,z=2},{dmg=LaserDamage,type=1},{x=0,y=0.3,z=0});
+                if HIT then
+                    for i,a in ipairs(HIT) do 
+                        LaserDamage = LaserDamage + (i*5);
+                    end 
+                end 
                 MYTOOL.playSoundOnPos(nx,ny,nz,10244,50,2);
                 MYTOOL.ADD_EFFECT(nx,ny+1,nz,1021,3);
             end,{},s)
@@ -24,6 +29,7 @@ local function createLaserCharge(nx,ny,nz,id,dur)
         end,{},dur+2);
     end,{},15)
 
+    return true;
 end 
 
 BOSS.ADD_ACTION(ID,function(id)
@@ -192,6 +198,8 @@ end
 BOSS.ADD_ACTION(ID,function(id)
     local atkPattern = BOSS.COUNTER(ID,"ATK_PATTERN","GET"); 
     local atkTemplate = BOSS.COUNTER(ID,"ATK_TEMPLATE","GET");
+    -- Boss start it's Attack  
+    LaserDamage = 10; --reset LaserDamage
     -- Chat:sendSystemMsg("atk Template is : "..atkTemplate);
     BOSS.COUNTER(ID,"ATK_PATTERN","ADD",1)
     if atkTemplate == 0 then

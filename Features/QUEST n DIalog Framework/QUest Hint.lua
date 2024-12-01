@@ -18,6 +18,14 @@ end
 
 local isCreated = {};
 
+function HINT_IS_CREATED(playerid)
+    if not isCreated[playerid] then 
+        return true;
+    else 
+        return false;
+    end 
+end
+
 HINT_ARROW = {};
 
 function HINT_ARROW:Show(playerid)

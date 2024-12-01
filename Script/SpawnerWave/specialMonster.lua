@@ -234,4 +234,5 @@ BOSS.TOOL.ATTACk = function(id,tablePos,tableDim,dmgData,vectorData)
             MYTOOL.dash(a,vx,vy,vz)
         end 
     end 
+    return OBJ;
 end

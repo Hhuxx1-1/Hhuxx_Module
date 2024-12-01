@@ -28,6 +28,28 @@ RUNNER.SET_NPC_RADIUS           = function (v) RUNNER.NPC_RADIUS = v ;end;
 RUNNER.CREATE_NPC               = function (id,x,y,z)
 
 end;
+
+local iter_index = 1;
+local function generateRandomID()
+    local timePart = iter_index;local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";local randomPart = ""
+    iter_index = iter_index + 1;
+    for i = 1, 3 do local index = math.random(1, #alphabet); randomPart = randomPart .. alphabet:sub(index, index);    end
+    return timePart .. randomPart
+end
+math.randomseed(os.time()) -- Seed the random number generator
+
+
+function RUNNER:ADD(f,delay)        
+    local idEvent = #RUNNER.DELAYED_EVENT..generateRandomID()
+    table.insert(RUNNER.DELAYED_EVENT,idEvent,{f=f,args={},delay=delay});    
+    return idEvent; 
+end;
+
+function RUNNER:CANCEL(idEvent)
+    table.remove(RUNNER.DELAYED_EVENT, idEvent); 
+end
+
+RUNNER.GAME_TICK = 0;
 --[[ 
 ==============================================================
 -- This Script Support RUNNER Call on RUNNER EVENT Table    ==
@@ -56,6 +78,7 @@ RUNNER.EXECUTE                  = function(idEvent)
 end ; 
     
 ScriptSupportEvent:registerEvent("Game.RunTime",function(e) 
+    RUNNER.GAME_TICK = e.ticks;
     if(RUNNER.LENGTH() > 0 )then  
         for i,a in pairs(RUNNER.EVENT) do 
             RUNNER.EXECUTE(i); end end end);

@@ -169,10 +169,10 @@ end
 
 -- Show Crown Head 
 local function showCrown(playerid,streak)
-local info = Graphics:makeGraphicsImage([[8_1029380338_1722530669]], 0.13, 0xff0000, 2);
-local result = Graphics:createGraphicsImageByActor(playerid,info,{x=0,y=3,z=0},30,0,40);
-local infoStreak = Graphics:makeGraphicsText(tostring(streak),32,0,3);
-local restult2 = Graphics:createGraphicsTxtByActor(playerid,infoStreak,{x=0,y=4,z=0},35,0,40)
+    local info       = Graphics:makeGraphicsImage([[8_1029380338_1722530669]], 0.13, 0xff0000, 2);
+    local result     = Graphics:createGraphicsImageByActor(playerid,info,{x=0,y=3,z=0},30,0,40);
+    local infoStreak = Graphics:makeGraphicsText(tostring(streak),32,0,3);
+    local restult2  = Graphics:createGraphicsTxtByActor(playerid,infoStreak,{x=0,y=4,z=0},35,0,40)
 end 
 
 -- Remove Crown Head

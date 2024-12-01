@@ -80,13 +80,16 @@ function CUTSCENE:removeCameraMan(playerid)
 end
 
 -- Create Dolls based on cutscene needs
-function CUTSCENE:createDoll(playerid, skin_ID , x,y,z)
+function CUTSCENE:createDoll(playerid, skin_ID , x,y,z , size)
     if CUTSCENE.DOLLS[playerid] == nil then 
         CUTSCENE.DOLLS[playerid] = {};
     end     
     local cameraman = 34;
     local r,obj = World:spawnCreature(x,y,z,cameraman,1) 
+    Creature:setAttr(obj[1],21,size or 1);--[[Set the Size into Normal Size]]
+    Actor:changeCustomModel(obj[1],skin_ID);--[[Set Skin ID]]
     table.insert(CUTSCENE.DOLLS[playerid],obj[1]);
+    return obj[1];
 end
 
 function CUTSCENE:removeDolls(playerid)
@@ -117,6 +120,11 @@ function CUTSCENE:moveCamera(x,y,z,playerid)
     end 
 end
 
+function CUTSCENE:setCamera(x,y,z,playerid)
+    local cam = CUTSCENE.PLAYER_CAMERA[playerid];
+    Actor:setPosition(cam,x,y,z)
+end
+
 function CUTSCENE:rotCamera(x,y,t,playerid)
     Player:SetCameraRotTransformBy(playerid,{x=x,y=y}, 1,t);
 end
@@ -125,12 +133,113 @@ function CUTSCENE:setrotCamera(x,y,t,playerid)
     Player:SetCameraRotTransformTo(playerid,{x=x,y=y}, 1,t);
 end
 
-function CUTSCENE:setText(playerid,text)
-    if T_Text then 
-        -- translation function available 
-        text = T_Text(playerid,text);
+function CUTSCENE:TRANSITION(playerid,dur)
+    for alpha=1,25 do 
+        RUNNER.NEW(function()
+            Customui:setAlpha(playerid,CUTSCENE.UI  , CUTSCENE.UI.."_4", alpha*4 )     
+        end,{},alpha)
     end 
-    Customui:setText(playerid,CUTSCENE.UI,CUTSCENE.UI.."_3",text);
+    RUNNER.NEW(function()
+        for alpha=25,0,-1 do 
+            RUNNER.NEW(function()
+                Customui:setAlpha(playerid,CUTSCENE.UI  , CUTSCENE.UI.."_4", alpha*4 )    
+            end,{},25-alpha)
+        end 
+    end,{},25+dur*20)
+end
+
+local ChatPopup = {
+    10950,10950,10950,
+    R = function(self)
+        -- return random index from self 
+        return self[math.random(1,3)]
+    end
+}
+
+
+function EXPLODE_STRING(text)
+    local words = {}
+
+    for word in string.gmatch(text, "%S+") do
+        table.insert(words, word)
+    end
+    return words;
+end
+
+
+function CUTSCENE:setText(playerid, text)
+    if T_Text then
+        -- Translate text if available
+        text = T_Text(playerid, text)
+    end
+    if text ~= " " then
+
+        local words = EXPLODE_STRING(text) -- Split the text into words
+        local cumulativeText = "" -- To store the incrementally built string
+
+        -- Iterate through each word with an increasing delay
+        for i, word in ipairs(words) do
+            RUNNER.NEW(function()
+                cumulativeText = cumulativeText .. (i > 1 and " " or "") .. word -- Append the word with a space if not the first
+                if Customui:setText(playerid, CUTSCENE.UI, CUTSCENE.UI .. "_3", cumulativeText) == 0 then
+                    Player:playMusic(
+                        playerid,
+                        ChatPopup:R(),
+                        100,
+                        1 + (math.random(9, 12) / 10),
+                        false
+                    )
+                end
+            end, {}, i * 3)
+        end
+
+    else 
+        Customui:setText(playerid, CUTSCENE.UI, CUTSCENE.UI .. "_3", "")
+    end 
+end
+
+function CUTSCENE:showChat(actorid,txt,i,dur,offset)
+    local graphinfo = Graphics:makeGraphicsText(txt,17,100,i);
+    local r,grphid = Graphics:createGraphicsTxtByActor(actorid, graphinfo, {x=0,y=1,z=0},offset or 120, 0,0);
+    RUNNER.NEW(function()
+        Graphics:removeGraphicsByObjID(actorid, i, 1);
+    end,{},dur*20);
+end 
+
+-- Function to calculate and jump to the next tick
+function CUTSCENE:JumpToNext(cutscene, currentTick, player)
+    -- Step 1: Get all available tick keys
+    local availableTicks = {}
+    for tick, action in pairs(cutscene) do
+        if type(tick) == "number" then -- Only include numeric keys
+            table.insert(availableTicks, tick)
+        end
+    end
+
+    -- Step 2: Sort ticks in ascending order
+    table.sort(availableTicks)
+
+    -- Step 3: Find the next tick
+    for _, tick in ipairs(availableTicks) do
+        if tick > currentTick then
+            -- Step 4: Execute the corresponding function for the next tick
+            if cutscene[tick] then
+                cutscene[tick](player)
+                return tick,false; -- Return the new current tick
+            end
+        end
+    end
+
+    -- If no next tick is found, return the current tick (end of cutscene)
+    return currentTick,true;
+end
+
+function CUTSCENE:DialogSay(index,name,p,text,dur,yaw,pitch,h)
+    local DOLL = CUTSCENE.DOLLS[p][index];
+    Actor:setFaceYaw(DOLL,yaw)
+    Actor:setFacePitch(DOLL,pitch)
+    CUTSCENE:showChat(DOLL,text,1,dur,h or 230);
+    CUTSCENE:setText(p,name.." : "..text);
 end
 
 -- Runtime Execution (Called every 1/20s or 0.05s)
@@ -140,13 +249,11 @@ ScriptSupportEvent:registerEvent("Game.RunTime", function(e)
             local success, err = pcall(function()
                 -- Execute function for current tick, increment time if cutscene not ended
                 local funx = data[NowTick(playerid)]
-                if funx and funx(playerid) then
+                if  funx and funx(playerid)  then
                     -- If function returns true, cutscene is complete
                     CUTSCENE:endCutscene(playerid)
                     if data["END"] then 
-                        threadpool:delay(1,function()
-                            data["END"](playerid)    
-                        end);
+                        data["END"](playerid)    
                     end 
                 end
             end)
@@ -156,4 +263,50 @@ ScriptSupportEvent:registerEvent("Game.RunTime", function(e)
             end
         end
     end 
+end)
+
+ScriptSupportEvent:registerEvent("UI.Hide",function(e)
+    local playerid,uiid =  e.eventobjid,e.CustomUI
+    local data = CUTSCENE.ACTIVE[playerid];
+    if data then 
+        if uiid == CUTSCENE.UI then
+            if data["END"] then 
+                CUTSCENE.ACTIVE[playerid] = nil;
+                CUTSCENE.TIME[playerid] = nil
+                CUTSCENE:removeCameraMan(playerid);
+                CUTSCENE:removeDolls(playerid);
+                data["END"](playerid)    
+            end 
+        end 
+    else 
+        return;
+    end 
+end)
+
+ScriptSupportEvent:registerEvent("UI.Button.Click", function(e)
+    local playerid, uiid = e.eventobjid, e.CustomUI
+    local btn = e.uielement
+
+    if btn == "7415474213980150002_8" then -- Next Button
+        local activeCutscene = CUTSCENE.ACTIVE[playerid]
+        local currentTime = CUTSCENE.TIME[playerid]
+
+        -- Ensure active cutscene and current time are valid
+        if activeCutscene and currentTime then
+            local nextTick,isEnd = CUTSCENE:JumpToNext(activeCutscene, currentTime, playerid)
+            if nextTick then
+                CUTSCENE.TIME[playerid] = nextTick
+            else
+                print("No next key available for player:", playerid)
+            end
+            if isEnd then 
+                CUTSCENE:endCutscene(playerid)
+                if activeCutscene["END"] then 
+                    activeCutscene["END"](playerid)    
+                end 
+            end 
+        else
+            print("Invalid cutscene state for player:", playerid)
+        end
+    end
 end)

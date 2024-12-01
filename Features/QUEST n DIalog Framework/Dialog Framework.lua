@@ -1,8 +1,8 @@
 HX_Q = {} ; 
 --[[Init the HX_Q to Hold Quest Functions And Mechanism]]
-HX_Q.LOADED_DATA = {}; --[[Store Player Loaded QUEST DATA here]]
-HX_Q.CURRENT_QUEST={};
-HX_Q.CURRENT_NPC = {};
+HX_Q.LOADED_DATA = {};HX_Q.CURRENT_QUEST={};HX_Q.CURRENT_NPC = {};
+local SelectedQuest = {};
+
 -- Function to Encode Key and Value into a single string
 function HX_Q:ENCODEKEY(Key, Val)
     -- Replace any `:` in Key and Val to prevent parsing issues
@@ -22,27 +22,36 @@ function HX_Q:DECODEKEY(EncodedKeyVal)
     if not encodedKey or not encodedVal then
         error("Invalid encoded string format")
     end
-
     -- Restore original values by replacing escaped `:` back to `:`
     local Key = encodedKey:gsub("\\:", ":")
     local Val = encodedVal:gsub("\\:", ":")
-    
     return Key, Val
 end
 
 --[[Set Global function to Load player Data from Cloud]]
 function HX_Q:LOAD_DATA(playerid)
     local r,datas = Valuegroup:getAllGroupItem(18, "QUEST_DATA",playerid)
-    print(datas)
+    Player:openUIView(playerid,"7438156314227448050")
     if HX_Q.LOADED_DATA[playerid] == nil then 
         -- create empty table 
         HX_Q.LOADED_DATA[playerid] = {}
     end 
+    local log = "";
+    local count = 1 
     for i,encoded in ipairs(datas) do 
         local key,val = HX_Q:DECODEKEY(encoded);
+        count = count + 1;
         -- save it to  the HQ_Q.LOADED_DATA[playerid]
         HX_Q.LOADED_DATA[playerid][key] = val;
+        RUNNER.NEW(function()
+            log = log .."Loading ".. encrypt_to_hex(key, "MYKEY").."-"..encrypt_to_hex(val,"MYVAL").." \n";
+            Customui:setText(playerid,"7438156314227448050","7438156314227448050_31",log)
+        end,{},i*5)
     end 
+    RUNNER.NEW(function()
+    log = log.."\n" .. " Loading Complete "
+    Customui:setText(playerid,"7438156314227448050","7438156314227448050_31",log)
+    end,{},20+count*5)
 end
 --[[Set Global function to Save player Data to Cloud]]
 function HX_Q:SAVE_DATA(playerid)
@@ -72,6 +81,31 @@ local function checkData(playerid)
     else
         print("Data is NOT LOADED");
         return false
+    end 
+end
+
+
+local function getCurQUEST(playerid)
+    local r0 , currentQuest = VarLib2:getPlayerVarByName(playerid,4,"QUEST_ACTIVE");
+    if r0 == 0 then return currentQuest end 
+end 
+
+function HX_Q:GET_CurQuest(playerid)
+    return getCurQUEST(playerid);
+end
+
+function HX_Q:SET_CurQuest(playerid,val)
+    local r0  = VarLib2:setPlayerVarByName(playerid,4,"QUEST_ACTIVE",val);
+    if r0 == 0 then return true end 
+end 
+
+function RunQuest(playerid,id,npc)
+    if HX_Q.NPC_QUEST_DATA[npc][id] then 
+        -- this will directly run Quest without needing to check it 1st function     
+        HX_Q.CURRENT_QUEST[playerid] = HX_Q.NPC_QUEST_DATA[npc][id];
+        Player:playMusic(playerid, 10954, 100,1,false);
+    else 
+        print("Error Quest is Not Exist : ",id);
     end 
 end
 
@@ -115,107 +149,72 @@ function HX_Q:CREATE_QUEST(npc,data)
     -- data must contain 3 function 
     if data then
         -- check if NPC already have quest setup
-        if not HX_Q.NPC_QUEST_DATA[npc] then
-            -- if not exist yet then create  a new table
-            HX_Q.NPC_QUEST_DATA[npc] = {};
-        end 
-        -- check if data contain 3 function
-        if type(data[1]) == "function" and type(data[2]) == "function" and type(data[3]) == "function" then
-            -- if yes then add it 
-            local name = data.name;
-            local dialog = data.dialog;
-            if name and dialog then 
-                HX_Q.NPC_QUEST_DATA[npc][name] = data;
-            else
-                print("Error: Quest Data must contain name and dialog",npc,data);
-            end 
-        end 
-    end 
+        -- if not exist yet then create  a new table
+        if not HX_Q.NPC_QUEST_DATA[npc] then   HX_Q.NPC_QUEST_DATA[npc] = {};  end 
+        local name,dialog = data.name, data.dialog;
 
+        if name and dialog then HX_Q.NPC_QUEST_DATA[npc][name] = data else print("ERROR :",npc,data) end 
+    end 
 end 
 
 function HX_Q:SHOW_QUEST(playerid,data)
     local c,r = pcall(function()
             
-        local name = data.name;
-        local text = data.text;
-        local pic = data.pic;
-        local reward = data.reward_text;
-        local detail = data.detail;
-        local uiid = "7431847660104653042";
+        local name = data.name;         local text = data.text;
+        local pic = data.pic;           local reward = data.reward_text;
+        local detail = data.detail;     local uiid = "7431847660104653042";
         local open = data.open;
+        local bar = data.bar;
 
-        if open then 
-            Player:openUIView(playerid,uiid)
-        else
-            Player:hideUIView(playerid,uiid)
+        if open then    Player:openUIView(playerid,uiid);
+        else            Player:hideUIView(playerid,uiid);
         end 
 
-        if name then 
-            Customui:setText(playerid,uiid,uiid.."_3","QUEST : "..name);
-        else
-            Customui:setText(playerid,uiid,uiid.."_3","QUEST");
+        if name then    Customui:setText(playerid,uiid,uiid.."_3","QUEST : "..name);
+        else            Customui:setText(playerid,uiid,uiid.."_3","QUEST");
         end 
 
-        if text then 
-            Customui:setText(playerid,uiid,uiid.."_6",text);
-        else
-            Customui:setText(playerid,uiid,uiid.."_6","");
+        if text then    Customui:setText(playerid,uiid,uiid.."_6",text);
+        else            Customui:setText(playerid,uiid,uiid.."_6","");
         end 
 
-        if pic then 
-            Customui:showElement(playerid,uiid,uiid.."_8")
-            Customui:setTexture(playerid,uiid,uiid.."_9",pic)
-        else 
-            Customui:hideElement(playerid,uiid,uiid.."_8")
+        if pic then     Customui:showElement(playerid,uiid,uiid.."_8"); Customui:setTexture(playerid,uiid,uiid.."_9",pic);
+        else            Customui:hideElement(playerid,uiid,uiid.."_8");
         end 
 
-        if reward then 
-            Customui:setText(playerid,uiid,uiid.."_7","Reward : "..reward);
-        else
-            if detail then
-                Customui:setText(playerid,uiid,uiid.."_7",detail);
-            else 
-                Customui:setText(playerid,uiid,uiid.."_7"," ");
-            end 
+        if reward then  Customui:setText(playerid,uiid,uiid.."_7","Reward : "..reward);
+        else            if detail then    Customui:setText(playerid,uiid,uiid.."_7",detail);
+                        else              Customui:setText(playerid,uiid,uiid.."_7"," ");
+                        end 
+        end 
+
+        if bar then 
+            local n,m = bar.v1,bar.v2;  local percentage = n/m;
+            local bar_color = bar.color;
+            local width,height = 230,28;
+            Customui:showElement(playerid,uiid,uiid.."_10");
+            Customui:setSize(playerid, uiid, uiid.."_11", width*percentage, height)
+        else            Customui:hideElement(playerid,uiid,uiid.."_10");
         end 
     end)
-
     if not c then print("Error when Displaying Quest",r) end 
 end
 
-local function getCurQUEST(playerid)
-    local r0 , currentQuest = VarLib2:getPlayerVarByName(playerid,4,"QUEST_ACTIVE");
-    if r0 == 0 then return currentQuest end 
+function HX_Q:CreatePointingArrowForPlayer(playerid,x,y,z,id ,colr)
+	local size=1;local color = colr or 0x00ffff;
+
+	local info=Graphics:makeGraphicsLineToPos(x, y, z, size, color, id);
+	local r,data = Graphics:createGraphicsLineByActorToPos(playerid, info, {x=0,y=0,z=0}, 0);
+    local info2=Graphics:makeGraphicsArrowToPos(x, y, z, size, color, id);
+	Graphics:createGraphicsArrowByActorToPos(playerid, info2, {x=0,y=0.5,z=0}, 10);
+    if r == 0 then return {line=info,arrow=info2} end
 end 
 
-function HX_Q:GET_CurQuest(playerid)
-    return getCurQUEST(playerid);
-end
-
-function HX_Q:SET_CurQuest(playerid,val)
-    local r0  = VarLib2:setPlayerVarByName(playerid,4,"QUEST_ACTIVE",val);
-    if r0 == 0 then return true end 
-end 
-
-function RunQuest(playerid,id,npc)
-    if HX_Q.NPC_QUEST_DATA[npc][id] then 
-        -- this will directly run Quest without needing to check it 1st function 
-        HX_Q.CURRENT_QUEST[playerid] = HX_Q.NPC_QUEST_DATA[0][id];
-    else 
-        print("Error Quest is Not Exist : ",id);
+function HX_Q:DeletePointingArrowForPlayer(playerid,data)
+    for i,dat in pairs(data) do 
+        Graphics:removeGraphicsByObjID(playerid, dat.id, dat.Type)
     end 
-end
-
-function HX_Q:CreatePointingArrowForPlayer(playerid,x,y,z)
-    -- RETURN IT'S id and Type 
 end 
-
-function HX_Q:DeletePointingArrowForPlayer(playerid,x,y,z,id)
-    
-end 
-
-local SelectedQuest = {};
 
 local function checkForAvailableQuest(playerid)
     local CURRENT_NPC = HX_Q.CURRENT_NPC[playerid];
@@ -223,22 +222,25 @@ local function checkForAvailableQuest(playerid)
         local actorid,id = CURRENT_NPC.id , CURRENT_NPC.npc;
         if HX_Q.NPC_QUEST_DATA[actorid] then
             local LOADED_QUEST_FROM_NPC = HX_Q.NPC_QUEST_DATA[actorid]
+            -- print("Accessing Quest Data from NPC["..actorid.."]",LOADED_QUEST_FROM_NPC);
             for _,QUESTNOW in pairs(LOADED_QUEST_FROM_NPC) do 
-            -- check for it's requirement 
-                if QUESTNOW[1](playerid) then 
+            -- check for it's requirement
+                -- print("Executing : ",QUESTNOW)
+                if QUESTNOW[1](playerid) == true then 
+                    -- print("It is True")
                     local DIALOG_UI = "7431848836925692146";
-                    Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_3", QUESTNOW.dialog,40001 ,1,0);
-                    Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", "OK");
+                    Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_3", QUESTNOW.dialog or "...",40001 ,1,0);
+                    Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", QUESTNOW.Action or "OK");
                     SelectedQuest[playerid] = QUESTNOW;
-                    return;
+                    return true,QUESTNOW;
                 end 
             end 
+            return false;
         end 
     end 
 end
 
-local function OpenDialog(playerid,NPC)
-    local DIALOG_UI = "7431848836925692146";
+local function loadDefaultDialog(NPC)
     local r,modelID = Creature:getActorID(tonumber(NPC));
     -- Load Creature Description 
     local r, name = Creature:GetMonsterDefName(modelID);
@@ -254,21 +256,60 @@ local function OpenDialog(playerid,NPC)
 
     -- Remove recolorer formats (#R, #G, #Y, and custom colors like #cff0af0)
     desc = string.gsub(desc, "#[%a%d]+", "") 
-    if desc ~= "" then 
-        
-        local currenctQuest = getCurQUEST(playerid)
-        local dataQuest = HX_Q.NPC_QUEST_DATA[modelID]
-        print("Current Quest : ",currenctQuest," Data Quest : ", dataQuest);
-        if  dataQuest and dataQuest[currenctQuest] then 
-            local dialog = dataQuest[currenctQuest].dialog;
-            desc = dialog;
-            Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", "OK");
-            SelectedQuest[playerid] = dataQuest[currenctQuest];
+
+    return desc,name,modelID;
+end 
+
+local function CheckActionButton(playerid,hide,text)
+    local DIALOG_UI = "7431848836925692146";
+    local code , err = pcall(function()
+        if not CURRENT_VSHOP[playerid] then 
+            Customui:hideElement(playerid,DIALOG_UI,DIALOG_UI.."_9")
         else 
-            SelectedQuest[playerid] = nil;
-            Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", "Talk");
+            Customui:showElement(playerid,DIALOG_UI,DIALOG_UI.."_9")
         end 
-            -- not a continue quest interactiion 
+        -- check if npc has quest set 
+        if hide then 
+            Customui:hideElement(playerid,DIALOG_UI,DIALOG_UI.."_5")
+        else 
+            Customui:showElement(playerid,DIALOG_UI,DIALOG_UI.."_5")
+        end 
+        if text == nil then 
+            Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", "Talk");
+        else 
+            Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", text);
+        end 
+    end)
+end
+
+local function OpenDialog(playerid,NPC)
+    local DIALOG_UI = "7431848836925692146";
+    local desc,name,modelID = loadDefaultDialog(NPC);
+    local hide = false;
+    local text = nil;
+    -- Check if it has Dialog set Up;
+    if desc ~= "" then 
+
+        -- get Player Current Quest 
+        local currenctQuest = getCurQUEST(playerid);
+        local dataQuest = HX_Q.NPC_QUEST_DATA[modelID];
+        local activeQuest = {};
+        -- print("Current Quest : ",currenctQuest," Data Quest : ", dataQuest);
+        if dataQuest then 
+            activeQuest = dataQuest[currenctQuest];
+            -- Quest is Active and When Player Click on That NPC it Directly Loads Quest Dialog instead of Default Dialog
+            if activeQuest then
+                desc = activeQuest.dialog;
+                text =  activeQuest.ActionTitle or "OK";
+                SelectedQuest[playerid] = dataQuest[currenctQuest];
+            else 
+                SelectedQuest[playerid] = nil;
+            end 
+        else 
+            -- Quest is not in Currently Active;
+            SelectedQuest[playerid] = nil;
+        end 
+        -- not a continue quest interactiion 
         local r1 = VarLib2:setPlayerVarByName(playerid, 4, "DIALOG_NOW", desc);
         local r2 = VarLib2:setPlayerVarByName(playerid, 4, "NPC_NAME", name);
         local r3 = VarLib2:setPlayerVarByName(playerid, 10, "CURRENT_NPC", NPC);
@@ -277,31 +318,22 @@ local function OpenDialog(playerid,NPC)
             Player:openUIView(playerid,DIALOG_UI);
             HX_Q.CURRENT_NPC[playerid] = {id = modelID , npc = NPC};
         end 
-        -- check for quest available 
-        local code , err = pcall(function()
-            if not CURRENT_VSHOP[playerid] then 
-                Customui:hideElement(playerid,"7431848836925692146","7431848836925692146_9")
-            else 
-                Customui:showElement(playerid,"7431848836925692146","7431848836925692146_9")
-            end 
-            -- check if npc has quest set 
-            if not HX_Q.NPC_QUEST_DATA[modelID] then 
-                Customui:hideElement(playerid,"7431848836925692146","7431848836925692146_5")
-            else 
-                Customui:showElement(playerid,"7431848836925692146","7431848836925692146_5")
-            end 
-        end)
+
+        CheckActionButton(playerid,hide,text);
     end 
 end
 
 -- register when player click the NPC 
-
 ScriptSupportEvent:registerEvent("Player.ClickActor",function(e)
     local playerid , NPC = e.eventobjid , e.toobjid 
-    OpenDialog(playerid,NPC);    
+    -- forgot to check NPC is player or not 
+    RUNNER.NEW(function()
+        if Actor:isPlayer(NPC) ~= 0 then 
+            OpenDialog(playerid,NPC);    
+        end     
+    end,{},1)
+    
 end)
-
-
 
 ScriptSupportEvent:registerEvent("UI.Button.Click",function(e)
     local playerid,uiid,elementid =  e.eventobjid,e.CustomUI,e.uielement 
@@ -310,9 +342,9 @@ ScriptSupportEvent:registerEvent("UI.Button.Click",function(e)
         if SelectedQuest[playerid] == nil then 
             if not checkForAvailableQuest(playerid) then 
                 local DIALOG_UI = "7431848836925692146";
-                HX_Q.CURRENT_QUEST[playerid] = nil;
+                -- HX_Q.CURRENT_QUEST[playerid] = nil; -- Don't Need to Clear Current Quest at All
                 SelectedQuest[playerid] = nil;
-                Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_3", "Thanks for Helping",40001 ,1,0);
+                Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_3", ". . .",40001 ,1,0);
                 Customui:hideElement(playerid ,DIALOG_UI, DIALOG_UI.."_5")
                 Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", " ");
                 RUNNER.NEW(function()
@@ -320,7 +352,19 @@ ScriptSupportEvent:registerEvent("UI.Button.Click",function(e)
                 end,{},40)
             end 
         else 
-            HX_Q.CURRENT_QUEST[playerid] = SelectedQuest[playerid];
+            --before attempting to insert the quest check if it has executeable function 1,2,3
+            -- if not then don't add 
+            if SelectedQuest[playerid][2] and SelectedQuest[playerid][3] then 
+                HX_Q.CURRENT_QUEST[playerid] = SelectedQuest[playerid];
+            end 
+
+            if SelectedQuest[playerid]["END"] then 
+                local r,err = pcall(function()
+                    return SelectedQuest[playerid]["END"](playerid)    
+                end)
+                if not r then print("Error Executing ['END']",err); end 
+            end 
+            
             SelectedQuest[playerid] = nil;
             Player:hideUIView(playerid,uiid);
         end 
@@ -334,8 +378,14 @@ end)
 
 ScriptSupportEvent:registerEvent("Game.RunTime",function(e)
     for playerid,playerid_Quest in pairs(HX_Q.CURRENT_QUEST) do 
-        if playerid_Quest[2](playerid) then 
-            playerid_Quest[3](playerid);
+        local r,err = pcall(function()
+            if playerid_Quest[2](playerid) then 
+                playerid_Quest[3](playerid);
+                HX_Q.CURRENT_QUEST[playerid] = nil;
+            end 
+        end)
+        if not r then 
+            -- clear the Error 
             HX_Q.CURRENT_QUEST[playerid] = nil;
         end 
     end 
@@ -345,9 +395,23 @@ function HX_Q:ShowReward(playerid,pictureurl,name,desc)
     local r , er = pcall(function()
         local REWARD_UI = "7434584486280108274";
         Customui:setText(playerid,REWARD_UI,REWARD_UI.."_6",name)
-        Customui:setText(playerid,REWARD_UI,REWARD_UI.."_11",desc)
+        Customui:setText(playerid,REWARD_UI,REWARD_UI.."_12",desc)
         Customui:setTexture(playerid,REWARD_UI,REWARD_UI.."_4",pictureurl)
         local r = Player:openUIView(playerid,REWARD_UI);    
     end)
     if not r then print("Show REWARD : ",er) end;
 end 
+
+function HX_Q:PLAY_MUSIC(playerid,code)
+    local r = VarLib2:setPlayerVarByName(playerid,3,"Music Code",code)
+    if r == 0 then Actor:addBuff(playerid,50000007,1,180*20); end 
+end
+
+function HX_Q:STOP_MUSIC(playerid)
+    Actor:removeBuff(playerid,50000007)
+end
+
+ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
+    print("Initiating Player Data for playerid : "..e.eventobjid);
+    HX_Q:LOAD_DATA(e.eventobjid)
+end)

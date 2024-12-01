@@ -166,5 +166,5 @@ GLOBAL_SHOP:InitVSHOP(5,{
     { id = 11672, stock = 100 }
 })
 
-
+ 
 GLOBAL_SHOP:AssignVSHOP(19,5,GLOBAL_SHOP.TYPE.Dynamic,0);

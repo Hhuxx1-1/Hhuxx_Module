@@ -190,3 +190,46 @@ MYTOOL.SHOOT_PROJECTILE = function(shooter,itemProjectileId,tPos,dPos,speed)
     local code, objid = World:spawnProjectile(shooter, itemid, x, y, z, dstx, dsty, dstz, speed)
     if code == 0 then return objid end 
 end
+
+MYTOOL.ADD_EFFECT_TO_ACTOR = function(targetid,effect,scale)
+    Actor:playBodyEffectById(targetid, effect, scale ,10);
+end
+
+MYTOOL.SET_ACTOR = function(id,v,bool)
+    if type(v) == "number" then 
+    Actor:setActionAttrState(id, v, bool)
+    else 
+        if type(v) == "string" then 
+            if v == "MOVE" then 
+                Actor:setActionAttrState(id,1, bool)
+            end 
+            if v == "ATTACK" then 
+                Actor:setActionAttrState(id,32, bool)
+            end 
+            if v == "ATTACKED" then 
+                Actor:setActionAttrState(id,64, bool)
+            end 
+            if v == "KILLED" then 
+                Actor:setActionAttrState(id,128, bool)
+            end 
+        end 
+    end 
+end
+
+
+MYTOOL.GET_NUM_OF_ITEMS_OF_PLAYER = function(playerid,itemid)
+    local item = 0;
+    for gridid = 0, 29 do
+        local r , itemids , num = Backpack:getGridItemID(playerid, gridid)
+        if itemids == itemid then item = item + num end 
+    end 
+    for gridid = 1000, 1007 do
+        local r , itemids , num = Backpack:getGridItemID(playerid, gridid)
+        if itemids == itemid then item = item + num end 
+    end 
+    for gridid = 8000,8004 do
+        local r , itemids , num = Backpack:getGridItemID(playerid, gridid)
+        if itemids == itemid then item = item + num end 
+    end 
+    return item;
+end
