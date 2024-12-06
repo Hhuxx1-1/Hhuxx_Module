@@ -14,6 +14,7 @@ LANGUAGE_UPDATE = function(playerid)
         else 
         playerSession[playerid]={lc="en",ar="EN"};
     end 
+    Player:notifyGameInfo2Self(playerid," Language Detected : "..playerSession[playerid].lc);
 end 
 
 ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
@@ -22,6 +23,18 @@ ScriptSupportEvent:registerEvent("Game.AnyPlayer.EnterGame",function(e)
     print(playerSession);
 end)
 
+reportText_ERROR = ""
+
+local loggedKeys = {} -- Table to track logged keys
+
+-- Function to log an error key
+function logErrorKey(key)
+    if not loggedKeys[key] then
+        -- If the key is not already logged, add it to the report and mark it as logged
+        reportText_ERROR = reportText_ERROR .. key .. "|"
+        loggedKeys[key] = true
+    end
+end
 T_Text = {};
 function toIndex(nonIndex)
     return string.gsub(nonIndex," ","_");
@@ -29,6 +42,11 @@ end
 function getSession(playerid)
     return playerSession[playerid].lc
 end 
+
+function trim(s)
+    return s:match("^%s*(.-)%s*$")
+end
+
 T_Text_meta = {
     __index = function(table,key)
         T_Text[key]={};
@@ -42,10 +60,12 @@ T_Text_meta = {
         a[toIndex(b[2])][b[1]] = nil;
     end,
     __call = function(T_Text,playerid,key)
+        key = trim(key) -- making sure the Key Trimmed
         if T_Text[toIndex(key)][getSession(playerid)] == nil then 
             --Chat:sendSystemMsg("#RERROR T_Text "..toIndex(key).." is Not Defined!",1029380338);
             --print("Session from [",playerid,"] got an Error",getSession(playerid));
             --print("What is T ?",T_Text);
+            logErrorKey(key)
             return key
         end 
         return T_Text[toIndex(key)][getSession(playerid)]

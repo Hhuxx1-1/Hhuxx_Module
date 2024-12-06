@@ -21,7 +21,7 @@ MISSION_TRACKER:NEW("X_MISSION_LAST_BOSS", {
     isFalse = [[Santa's magic has weakened due to the Dark Lord's influence in the Dark Land. 
 Gather your strength, face the Dark Lord, and restore the magic to save Christmas!
 
-Hint : You need to Talk with Captain Wolves. (Captain Wolves is Outside the Forest)]],
+Hint : Talk to NPCs and Do Quest to Get More Clue and Guide]],
     isTrue = [[Well done! You restored Santa's magic by defeating the Dark Lord in the Dark Land. 
 Christmas is saved, and your heroic efforts will be remembered!]],
     name = "Santa's Magic",
@@ -57,7 +57,7 @@ MISSION_TRACKER:NEW("FIND_CAPTAIN_WOLF", {
     f = function(playerid)
         return HX_Q:GET(playerid,"FIRST_TIME_CAPTAIN_WOLF_MEET") ~= "Empty"
     end,
-    isFalse = [[Find Captain Wolf at The Weapon Shop. (He Should be Standing Near The Stair)]],
+    isFalse = [[Find Captain Wolf at The Weapon Shop. (He Should be Standing Near The Stair inside the Weapon Shop)]],
     isTrue = [[You Already Meet Captain Wolf! Congrats For Finishing Your First Mission Puzzle! ]],
     name = "Captain Wolf",
     fullname = "Find Captain Wolf"
@@ -71,7 +71,7 @@ MISSION_TRACKER:NEW("TALK_CAPTAIN_WOLF_ON_GUILD",{
     f = function(playerid)
         return HX_Q:GET(playerid,"FIRST_TIME_TALK_TO_CAPTAIN_WOLF") ~= "Empty"
     end,
-    isFalse = [[Talk to Captain Wolf at The Guild. He Should be Standing Near The Guild]],
+    isFalse = [[Talk to Captain Wolf at The Guild. He Should be on Second Floor at Guild House]],
     isTrue = [[You Already Talk to Captain Wolf! Congrats For Finishing Mission]],
     name = "Captain Wolf 2",
     fullname = "Talk to Captain Wolf at The Guild"
@@ -179,4 +179,63 @@ MISSION_TRACKER:NEW("The_5_Minosour",{
     isTrue = [[You Successfully Defeat 5 Minosour. Now You Can Pass the Sword Master Xuyou Exam]],
     name = "Minosour",
     fullname = "Find 5 Minosour in Red Crystal Cave and Defeat Them!"
+})
+
+MISSION_REWARD:ADD("Talk_To_Chief",{
+    {type = "CURRENCY", amount = 100}
+})
+
+MISSION_TRACKER:NEW("Talk_To_Chief",{
+    f = function(p)
+        return HX_Q:GET(p,"CHIEF_TALK") == "DONE"
+    end,
+    isFalse = [[You Need to Talk to Chief to Get Objective on How to Defeat the Dark Lord]],
+    isTrue = [[You Successfully Talk to Chief. And Finished to Walk Around The Village Guided by Karin. Now You Just Need to Find Captain Wolf for More Info About The Dark Lord]],
+    name = "Find Chief",
+    fullname = "Talk to Chief to Get Objective on How to Defeat the Dark Lord"
+})
+
+
+MISSION_TRACKER:NEW("FIND_LOST_REINDEER",{
+    f= function(p)
+        local FOUND_RUN_AWAY_REINDEER = HX_Q:GET(p,"FOUND_RUN_AWAY_REINDEER")  
+        if FOUND_RUN_AWAY_REINDEER == "Empty" then 
+            FOUND_RUN_AWAY_REINDEER = 0;
+        end 
+
+        return tonumber(FOUND_RUN_AWAY_REINDEER) >= 4
+    end,
+    isFalse = [[Find Run Away Reindeer]],
+    isTrue = [[You Successfully Helped Santa Find Their Runaway Reindeer]],
+    name = "Lost Reindeer",
+    fullname = "Help Santa Find Reindeer"
+});
+
+MISSION_TRACKER:NEW("GET_BACK_50_GIFT_FROM_GRINCH",{
+    f= function(p)
+        local RECOVERED_GIFT_PROGGRESS = HX_Q:GET(p,"RECOVERED_GIFT_PROGGRESS")  
+        if RECOVERED_GIFT_PROGGRESS == "Empty" then 
+            RECOVERED_GIFT_PROGGRESS = 0;
+        end 
+        return tonumber(RECOVERED_GIFT_PROGGRESS) >= 50
+    end,
+    isFalse = [[Find Lost Gift for Santa. (You Can Find Them by Defeating Grinch)]],
+    isTrue = [[You Successfully Helped Santa Find Their Lost Gift due to Stolen by Grinch]],
+    name = "Missing Gift",
+    fullname = "Help Santa Find Missing Gift"
+})
+
+MISSION_TRACKER:NEW("DEFEAT_150_BANDIT",{
+    f= function(p)
+        local DEFEAT_150_BANDIT_FROM_NOW = HX_Q:GET(p,"DEFEAT_150_BANDIT_FROM_NOW")  
+        if DEFEAT_150_BANDIT_FROM_NOW == "Empty" then 
+            DEFEAT_150_BANDIT_FROM_NOW = 0;
+        end 
+
+        return  tonumber(DEFEAT_150_BANDIT_FROM_NOW) >= 150 
+    end,
+    isFalse = [[You Need To Gift Bandit a Lesson to Not Attacking Santa's Minion. By Defeating Them!]],
+    isTrue = [[You Successfully Drawed The Border and Bring Safety to Santa's Minion]],
+    name = "The Bandit",
+    fullname = "Show the Bandit What is Scary"
 })

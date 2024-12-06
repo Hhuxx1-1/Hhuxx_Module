@@ -1,4 +1,3 @@
--- Cutscene Module
 CUTSCENE = {}           -- Stores global cutscene functions and data
 CUTSCENE.DATA = {}      -- Contains predefined cutscene sequences
 CUTSCENE.ACTIVE = {}    -- Tracks active cutscenes by player ID
@@ -166,7 +165,6 @@ function EXPLODE_STRING(text)
     return words;
 end
 
-
 function CUTSCENE:setText(playerid, text)
     if T_Text then
         -- Translate text if available
@@ -235,7 +233,13 @@ function CUTSCENE:JumpToNext(cutscene, currentTick, player)
 end
 
 function CUTSCENE:DialogSay(index,name,p,text,dur,yaw,pitch,h)
+    if CUTSCENE.DOLLS[p] == nil then 
+        CUTSCENE.DOLLS[p] = {};
+    end 
     local DOLL = CUTSCENE.DOLLS[p][index];
+    if index == 0 then --HandlePlayer try to say Dialog 
+        DOLL = p;
+    end 
     Actor:setFaceYaw(DOLL,yaw)
     Actor:setFacePitch(DOLL,pitch)
     CUTSCENE:showChat(DOLL,text,1,dur,h or 230);

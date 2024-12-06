@@ -1034,3 +1034,41 @@ HX_Q:CREATE_QUEST(78,{
         
     end 
 })
+
+
+
+HX_Q:CREATE_QUEST(0,{
+    name = [[Find_Captain_Wolfy1]] , dialog = "non dialog",
+    [1] = function(p)
+        return false
+    end,
+    [2] = function(p)
+        local x,y,z = 30,9,135; 
+        local dis = getDistance2Target(p,x,y,z);
+        DisValidator(p,dis);
+        
+        if dis <= 4 then
+            HX_Q:SHOW_QUEST(p, { open = false});
+            smallestRange[p] = nil;
+            HX_Q:DeletePointingArrowForPlayer(p,arrowe[p])
+            arrowe[p] = nil;
+            return true 
+        else 
+            HX_Q:SHOW_QUEST(p, { open=true,text = "Talk to Captain Wolf" , pic = [[3000011]] , detail=dis.." Block Away"});
+            -- create Graphic info on Location  
+            if arrowe[p] == nil then
+                local data = HX_Q:CreatePointingArrowForPlayer(p,x,y,z,1);
+                arrowe[p] = data;
+                -- print("an Arrow Created : ",data);
+            end 
+        end 
+    end,
+    [3] = function(p)
+        MYTOOL.ADD_EFFECT(30,8,134.5,1024,1);
+        MYTOOL.ADD_EFFECT(30.5,11,134.5,1025,2);
+        RUNNER.NEW(function()
+            MYTOOL.DEL_EFFECT(30,8,134.5,1024,1);
+            MYTOOL.DEL_EFFECT(30.5,11,134.5,1025,2);
+        end,{},2000)   
+    end
+})

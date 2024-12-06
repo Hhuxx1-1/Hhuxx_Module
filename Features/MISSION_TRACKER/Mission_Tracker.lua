@@ -95,7 +95,12 @@ function MISSION_TRACKER:READ(playerid, index)
     if resultMessage == nil then 
         resultMessage = mission.results[conditionMet and 2 or 1]
     end 
-
+    if T_Text then 
+        -- Check for Translation Availability
+        mission.name = T_Text(playerid,mission.name);
+        resultMessage = T_Text(playerid, resultMessage);
+        mission.fullname = T_Text(playerid,mission.fullname);
+    end 
     return {
         key = key,
         short_name = mission.name,
@@ -205,7 +210,8 @@ end
 
 -- UI Show Event
 ScriptSupportEvent:registerEvent("UI.Show", function(e)
-    local playerid = e.eventobjid
+    local playerid = e.eventobjid;
+    playerSelectedIndex[playerid] = nil
     UPDATE_MISSION_TRACKER(playerid)
 end)
 

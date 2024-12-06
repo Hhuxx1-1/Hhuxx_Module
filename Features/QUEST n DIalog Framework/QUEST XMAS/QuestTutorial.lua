@@ -185,7 +185,7 @@ ScriptSupportEvent:registerEvent("Player.AddBuff",function(e)
     local buffid = e.buffid;
     local playerid = e.eventobjid;
     if buffid == startBuff then 
-
+        LANGUAGE_UPDATE(playerid);
         if HX_Q:GET_CurQuest(playerid) == "none" then 
             local tutorialStatus = tonumber(HX_Q:GET(playerid,"TUTORIAL"));
             if tutorialStatus ~= 3 then 
@@ -273,6 +273,7 @@ HX_Q:CREATE_QUEST(59,{
         end 
     end,
     [3] = function(p)
+        HX_Q:SET(p,"CHIEF_TALK","DONE")
         CUTSCENE:start(p,[[Going Arround the Village]]);
     end
 })

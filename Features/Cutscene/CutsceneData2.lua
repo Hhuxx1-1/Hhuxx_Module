@@ -289,7 +289,10 @@ CUTSCENE:CREATE("INTO_CHIEF",{
     ["END"] = function(p)
         HX_Q:SET(p,"BEFORE_INTO_CAFETARIA","TRUE");
         -- RunQuest that guide player into Cafetaria.
+        -- set Mission Unlocked 
+        MISSION_TRACKER:SET_UNLOCKED(p,"Talk_To_Chief");
         RunQuest(p,"INTO_CAFETARIA",0);
+
     end
 })
 
@@ -348,7 +351,7 @@ CUTSCENE:CREATE("Going Arround the Village",{
         KarinSay(p,text,2,146,0);
     end,
     [380] = function(p)
-        local text = "Let's Visit Him 1st";
+        local text = "Let's Visit Him First";
         KarinSay(p,text,2,146,0);
     end,
     [420] = function(p)
@@ -423,7 +426,11 @@ CUTSCENE:CREATE("GUIDED_BY_KARIN_3",{
         local text = [[For More Guide Find ("Captain Wolf")]];
         KarinSay(p,text,2,300,0);
     end,
-    [320] = function(p)
+    [360] = function(p)
+        local text = [[You Can Find Him Inside The Weapon Shop]];
+        KarinSay(p,text,2,300,0);
+    end,
+    [420] = function(p)
         return true;    
     end,
     ["END"] = function(p)
@@ -433,12 +440,20 @@ CUTSCENE:CREATE("GUIDED_BY_KARIN_3",{
             RUNNER.NEW(function()
                 MISSION_TRACKER:SET_UNLOCKED(p,"FIND_CAPTAIN_WOLF");
                 -- create Special Effect Above That Npc 
-                MYTOOL.ADD_EFFECT(30.5,8,135.5,1024,1);
-                MYTOOL.ADD_EFFECT(30.5,11,135.5,1025,2);
+                MYTOOL.ADD_EFFECT(30,8,134.5,1024,1);
+                MYTOOL.ADD_EFFECT(30.5,11,134.5,1025,2);
                 RUNNER.NEW(function()
-                    MYTOOL.DEL_EFFECT(30.5,8,135.5,1024,1);
-                    MYTOOL.DEL_EFFECT(30.5,11,135.5,1025,2);
+                    MYTOOL.DEL_EFFECT(30,8,134.5,1024,1);
+                    MYTOOL.DEL_EFFECT(30.5,11,134.5,1025,2);
                 end,{},2000)    
+
+                -- also enable marketing function
+                if VarLib2:setPlayerVarByName(p,5, "Marketing_Available", true) == 0 then 
+                    Chat:sendSystemMsg("Hint: You Can Open Mission Tab.")
+                    RUNNER.NEW(function(e)
+                        RunQuest(p,"Find_Captain_Wolfy1",0)
+                    end,{},1)
+                end 
             end,{},15)
         end,{},5)
     end

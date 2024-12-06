@@ -59,10 +59,10 @@ HX_Q:CREATE_QUEST(0,{
         local UIHINT = "7438421395313989874";
         Player:openUIView(playerid,UIHINT);
         MYTOOL.ADD_EFFECT(-1,8,19,1024,1);
-        MYTOOL.ADD_EFFECT(-1,11,19,1025,2);
+        MYTOOL.ADD_EFFECT(0,8,18,1025,2);
         RUNNER.NEW(function()
             MYTOOL.DEL_EFFECT(-1,8,19,1024,1);
-            MYTOOL.DEL_EFFECT(-1,11,19,1025,2);
+            MYTOOL.DEL_EFFECT(0,8,18,1025,2);
         end,{},1000)
     end 
 });
@@ -190,6 +190,12 @@ HX_Q:CREATE_QUEST(0,{
     end,
     [3] = function(p)
        Chat:sendSystemMsg("Tips: You can use the Map to Navigate and Explore Location that Hasn't Explored",p);
+       MYTOOL.ADD_EFFECT(-38.5,9,142,1024,1);
+       MYTOOL.ADD_EFFECT(-38.5,9,141,1025,2);
+       RUNNER.NEW(function()
+           MYTOOL.DEL_EFFECT(-38.5,9,142,1024,1);
+           MYTOOL.DEL_EFFECT(-38.5,9,41,1025,2);
+       end,{},1000)
     end 
 })
 

@@ -243,7 +243,7 @@ CUTSCENE:CREATE("So_You_Are_Ready",{
 })
 
 HX_Q:CREATE_QUEST(60,{
-    name = "Going_To_Lumina_Room    ", dialog = "Non Dialog",
+    name = "Going_To_Lumina_Room", dialog = "Go Hero! Get Your Key!",
     hint = {x=-658,y=8,z=461},
     [1] = function(p)
         if  HX_Q:GET(p,[[IS_QUEST_MISSION_3]])     == "DONE"
@@ -251,6 +251,7 @@ HX_Q:CREATE_QUEST(60,{
         and HX_Q:GET(p,[[Light_Warrior_Cutscene]]) == "DONE"
         and HX_Q:GET(p,[[Have_Access_Lumina_Room]]) == "TRUE"
         and HX_Q:GET(p,[[Going_To_Lumina_Cutscene]]) == "DONE"
+        and HX_Q:GET(p,"LUMINA_CHEST") ~= "OBTAINED" 
         then 
             return true;
         else 
@@ -279,4 +280,23 @@ HX_Q:CREATE_QUEST(60,{
             end,{},2000)    
         end,{},1)
     end 
+})
+
+
+HX_Q:CREATE_QUEST(60,{
+    name = "Finished_Lumina", dialog = "Good Job Hero. You Are Good To Go",
+    hint = {x=-658,y=8,z=461},
+    [1] = function(p)
+        if  HX_Q:GET(p,[[IS_QUEST_MISSION_3]])     == "DONE"
+        and HX_Q:GET(p,[[Swordman_3]])             == "DONE"
+        and HX_Q:GET(p,[[Light_Warrior_Cutscene]]) == "DONE"
+        and HX_Q:GET(p,[[Have_Access_Lumina_Room]]) == "TRUE"
+        and HX_Q:GET(p,[[Going_To_Lumina_Cutscene]]) == "DONE"
+        and HX_Q:GET(p,"LUMINA_CHEST") == "OBTAINED" 
+        then 
+            return true;
+        else 
+        return false;
+        end 
+    end
 })

@@ -38,13 +38,15 @@ function HX_Q:LOAD_DATA(playerid)
     end 
     local log = "";
     local count = 1 
+    local makx = #datas
     for i,encoded in ipairs(datas) do 
         local key,val = HX_Q:DECODEKEY(encoded);
         count = count + 1;
         -- save it to  the HQ_Q.LOADED_DATA[playerid]
         HX_Q.LOADED_DATA[playerid][key] = val;
         RUNNER.NEW(function()
-            log = log .."Loading ".. encrypt_to_hex(key, "MYKEY").."-"..encrypt_to_hex(val,"MYVAL").." \n";
+            local pro = math.ceil(i/makx*100)
+            log = log .."Loading "..pro.."% \n";
             Customui:setText(playerid,"7438156314227448050","7438156314227448050_31",log)
         end,{},i*5)
     end 
@@ -174,7 +176,12 @@ function HX_Q:SHOW_QUEST(playerid,data)
         else            Customui:setText(playerid,uiid,uiid.."_3","QUEST");
         end 
 
-        if text then    Customui:setText(playerid,uiid,uiid.."_6",text);
+        if text then    
+        if T_Text then
+            -- Translate text if available
+            text = T_Text(playerid, text)
+        end
+        Customui:setText(playerid,uiid,uiid.."_6",text);
         else            Customui:setText(playerid,uiid,uiid.."_6","");
         end 
 
@@ -182,8 +189,18 @@ function HX_Q:SHOW_QUEST(playerid,data)
         else            Customui:hideElement(playerid,uiid,uiid.."_8");
         end 
 
-        if reward then  Customui:setText(playerid,uiid,uiid.."_7","Reward : "..reward);
-        else            if detail then    Customui:setText(playerid,uiid,uiid.."_7",detail);
+        if reward then  
+            if T_Text then
+                -- Translate text if available
+                reward = T_Text(playerid, reward)
+            end
+            Customui:setText(playerid,uiid,uiid.."_7","Reward : "..reward);
+        else            if detail then    
+                        if T_Text then
+                            -- Translate text if available
+                            detail = T_Text(playerid, detail)
+                        end
+                        Customui:setText(playerid,uiid,uiid.."_7",detail);
                         else              Customui:setText(playerid,uiid,uiid.."_7"," ");
                         end 
         end 
@@ -201,7 +218,7 @@ function HX_Q:SHOW_QUEST(playerid,data)
 end
 
 function HX_Q:CreatePointingArrowForPlayer(playerid,x,y,z,id ,colr)
-	local size=1;local color = colr or 0x00ffff;
+	local size=1;local color = colr or 0x00ff00;
 
 	local info=Graphics:makeGraphicsLineToPos(x, y, z, size, color, id);
 	local r,data = Graphics:createGraphicsLineByActorToPos(playerid, info, {x=0,y=0,z=0}, 0);
@@ -275,8 +292,15 @@ local function CheckActionButton(playerid,hide,text)
             Customui:showElement(playerid,DIALOG_UI,DIALOG_UI.."_5")
         end 
         if text == nil then 
-            Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", "Talk");
+            local talk = "Talk";
+            if T_Text then 
+                talk = T_Text(playerid,talk)
+            end 
+            Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", talk);
         else 
+            if T_Text then 
+                text = T_Text(playerid,text)
+            end 
             Customui:setText(playerid, DIALOG_UI, DIALOG_UI.."_6", text);
         end 
     end)
@@ -310,6 +334,10 @@ local function OpenDialog(playerid,NPC)
             SelectedQuest[playerid] = nil;
         end 
         -- not a continue quest interactiion 
+        if T_Text then 
+            desc = T_Text(playerid,desc);
+            name = T_Text(playerid,name);
+        end 
         local r1 = VarLib2:setPlayerVarByName(playerid, 4, "DIALOG_NOW", desc);
         local r2 = VarLib2:setPlayerVarByName(playerid, 4, "NPC_NAME", name);
         local r3 = VarLib2:setPlayerVarByName(playerid, 10, "CURRENT_NPC", NPC);
