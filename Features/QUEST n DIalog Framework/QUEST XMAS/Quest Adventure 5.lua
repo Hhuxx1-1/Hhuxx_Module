@@ -137,6 +137,7 @@ CUTSCENE:CREATE("STORY2_SANTA_IS_ATTACKED",{
             end 
         end 
         RUNNER.NEW(function()
+            HX_Q:SET(p,"STORY2","DONE");
             HX_Q:PLAY_MUSIC(p,15)
             Player:setPosition(p,-6,7, 528)
             RunQuest(p,"DEFEAT_3_F_BANDIT",0);
@@ -256,7 +257,7 @@ CUTSCENE:CREATE("Bandit_Win_Finished",{
     end,
     [40] = function(p)
         local text = "I Managed to Defeat Those Bandit"
-        Chat:sendSystemMsg("HX_Q:GET"..HX_Q:GET(p,"LOSE_TO_BANDIT"))
+        -- Chat:sendSystemMsg("HX_Q:GET"..HX_Q:GET(p,"LOSE_TO_BANDIT"))
         if HX_Q:GET(p,"LOSE_TO_BANDIT") ~= "Empty" then 
             text = "I Defeated by Those Bandit"
         end 
@@ -455,7 +456,8 @@ HX_Q:CREATE_QUEST(0,{
     end, 
     [3] = function(p)
         RUNNER.NEW(function()
-            CUTSCENE:start(p,"YOUR_FIRST_RAID_SUCCEED")     
+            HX_Q:SET(p,"DEFEAT_150_BANDIT_FROM_NOW",0);
+            CUTSCENE:start(p,"YOUR_FIRST_RAID_SUCCEED");
         end,{},20)
     end
 })
@@ -537,7 +539,7 @@ HX_Q:CREATE_QUEST(16,{
 })
 
 HX_Q:CREATE_QUEST(16,{
-    name = "Erlang2" , dialog = "Thank You For Helping Us!",
+    name = "Erlang2" , dialog = "Thank You For Helping Us!, (Current Map is Under Development Version.",
     [1] = function(p)
         if HX_Q:GET(p,"CUTSCENE_ON_BANDIT_RAID") == "DONE" 
         and HX_Q:GET(p,"PHASE_2_PROGGRESS") == "DONE" 
@@ -622,3 +624,136 @@ CUTSCENE:CREATE("YOUR_FIRST_RAID_SUCCEED",{
     end
 })
 
+local reindeer_holder = { };
+
+for reindeer = 98 , 101 do 
+    HX_Q:CREATE_QUEST(reindeer,{
+        name="Collect_Not_Yet", dialog = "Successfully Found The Missing Reindeer. Now You Need to Return it Back. You can Only Get One Reindeer In Single Time.",
+        [1] = function(p)
+            if HX_Q:GET(p,"REINDEER"..reindeer-97) ~= "OBTAINED" then
+                return true;
+            end 
+        end,
+        [2] = function(p)
+            if reindeer_holder[p] == nil then 
+                -- create one reindeer that will follow player. 
+                local x,y,z = MYTOOL.GET_POS(p)
+                local r,obj = World:spawnCreature(x,y,z,102,1); --spawn 1 reindeer
+                reindeer_holder[p] = obj[1]; -- obj is array contain 
+            else 
+                -- check if it has hp 
+                local r,hp = Creature:getAttr(reindeer_holder[p],2)
+                -- Chat:sendSystemMsg("R : "..r.." , HP : "..hp)
+                if r == 0 then 
+                    if hp > 0 then
+                    -- reindeer is still exist;
+                    -- obtain player and that object position 
+                        local x,y,z = MYTOOL.GET_POS(p);
+                        local x2,y2,z2 = MYTOOL.GET_POS(reindeer_holder[p]);
+                        -- calculate_distance
+                        local distance = MYTOOL.calculate_distance(x,y,z,x2,y2,z2);
+                        if distance > 4 then
+                            -- make the reindeer move closer to player;
+                            Actor:tryMoveToPos(reindeer_holder[p],x,y,z,1+(distance/5));
+                        end 
+                        -- pathfinder logic;
+                        -- based from player position;
+                        local tx,ty,tz = -83,7,677; 
+                        local distance_2_goal = math.floor(MYTOOL.calculate_distance(x2,y2,z2,tx,ty,tz));
+                        if distance_2_goal > 10 then 
+                            HX_Q:SHOW_QUEST(p, { open=true,text = "Return the Reindeer Into Santa's Camp" , detail=distance_2_goal.." Block Away"});
+                        else
+                            HX_Q:SHOW_QUEST(p, { open = false});
+                            return true 
+                        end 
+                    else
+                        -- player reindeer is gone; 
+                        reindeer_holder[p] = nil;
+                    end 
+                else
+                    -- player reindeer is gone; 
+                    reindeer_holder[p] = nil;
+                end 
+            end 
+
+
+        end,
+        [3] = function(p)
+            if World:despawnActor(reindeer_holder[p]) == 0 then 
+                reindeer_holder[p] = nil;   
+
+                HX_Q:SET(p,"REINDEER"..reindeer-97,"OBTAINED");
+                -- increase the FOUND_RUN_AWAY_REINDEER
+                local FOUND_RUN_AWAY_REINDEER = HX_Q:GET(p,"FOUND_RUN_AWAY_REINDEER");
+                -- check if it is empty 
+                if FOUND_RUN_AWAY_REINDEER == "Empty" then
+                    FOUND_RUN_AWAY_REINDEER = 0 ;
+                end 
+                HX_Q:SET(p,"FOUND_RUN_AWAY_REINDEER",FOUND_RUN_AWAY_REINDEER + 1 );
+                CUTSCENE:start(p,"RETURNED_A_REINDEER");
+            end 
+
+        end
+    })
+    HX_Q:CREATE_QUEST(reindeer,{
+        name="Collect_Already", dialog = "You Already Found This Reindeer",
+        [1] = function(p)
+            if HX_Q:GET(p,"REINDEER"..reindeer-97) == "OBTAINED" then
+                return true;
+            end 
+        end
+    })
+end 
+
+CUTSCENE:CREATE("RETURNED_A_REINDEER",{
+    [1] = function(p)
+        CUTSCENE:setCamera(-87,7, 672,p);
+    end,
+    [2] = function(p)
+        CUTSCENE:setrotCamera(90,15,1,p);
+    end,
+    [10] = function(p)
+        CUTSCENE:createDoll(p,[[mob_102]],-84,7,654,20);
+    end,
+    [20] = function(p)
+        Actor:tryMoveToPos(CUTSCENE.DOLLS[p][1],-85,7,683,2);
+        CUTSCENE:setText(p,"Successfully Returned Reindeer Safely");
+    end,
+    [80] = function(p)
+        return true
+    end,
+    ["END"] = function(p)
+        local FOUND_RUN_AWAY_REINDEER = HX_Q:GET(p,"FOUND_RUN_AWAY_REINDEER");
+        Chat:sendSystemMsg("You Already Found "..FOUND_RUN_AWAY_REINDEER.." Reindeer",p);
+    end 
+})
+
+local bandit = 92;
+
+ScriptSupportEvent:registerEvent("Player.DefeatActor",function(e)
+    local playerid = e.eventobjid;
+    local actorid = e.targetactorid;
+    if HX_Q:GET(playerid,"DEFEAT_150_BANDIT_FROM_NOW") ~= "Empty" then 
+        if actorid == bandit then 
+            local Proggress = tonumber(HX_Q:GET(playerid,"DEFEAT_150_BANDIT_FROM_NOW"));
+            local maks = 150;
+            HX_Q:SET(playerid,"DEFEAT_150_BANDIT_FROM_NOW",math.min(Proggress + 1,maks));
+        end 
+    end 
+end)
+
+for gift = 96 , 97 do 
+    HX_Q:CREATE_QUEST(gift,{
+        name="Collect_Already", dialog = "Collect This Gift?",
+        [1] = function(p)
+                return true;
+        end,["END"] = function(p)
+            local npc = HX_Q.CURRENT_NPC[p].npc;
+            if Actor:killSelf(npc) == 0 then 
+                local Proggress = tonumber(HX_Q:GET(p,"RECOVERED_GIFT_PROGGRESS"));
+                local maks = 50;
+                HX_Q:SET(p,"RECOVERED_GIFT_PROGGRESS",math.min(Proggress + 1,maks));
+            end 
+        end
+    })
+end 

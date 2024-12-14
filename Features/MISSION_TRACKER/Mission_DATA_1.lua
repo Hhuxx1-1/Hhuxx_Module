@@ -14,6 +14,24 @@ Despite being lost in the forest, your bravery and determination saved the day.]
     fullname = "Mission: Rescue Santa"
 })
 
+MISSION_REWARD:ADD("Captain_Wolves_Quest_Begginer",{
+    {type = "CURRENCY" , amount = 2000 };
+})
+
+MISSION_TRACKER:NEW("Captain_Wolves_Quest_Begginer",{
+    f = function(p)
+        if HX_Q:GET(p,[[IS_QUEST_MISSION_3]]) == "DONE" then 
+            return true;
+        else 
+            return false;
+        end 
+    end,
+    isFalse = [[You have not completed All the quest "Captain Wolves Quest" yet. Try To Talk to Captain Wolves in the Guild House. ]],
+    isTrue = [[You have completed All the quest "Captain Wolves Quest". ]],
+    name = "Quest Begginer",
+    fullname = "Mission: Quest Begginer help Captain Wolves and Get Infomation"
+})
+
 MISSION_TRACKER:NEW("X_MISSION_LAST_BOSS", {
     f = function(playerid)
         return HX_Q:GET(playerid, "DEFEAT_LAST_BOSS") == "TRUE" 
@@ -238,4 +256,4 @@ MISSION_TRACKER:NEW("DEFEAT_150_BANDIT",{
     isTrue = [[You Successfully Drawed The Border and Bring Safety to Santa's Minion]],
     name = "The Bandit",
     fullname = "Show the Bandit What is Scary"
-})
+});

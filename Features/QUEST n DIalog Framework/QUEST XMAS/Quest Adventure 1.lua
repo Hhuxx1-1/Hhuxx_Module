@@ -102,7 +102,7 @@ HX_Q:CREATE_QUEST(11,{
         RUNNER.NEW(function()
             RunQuest(playerid,"CHAIN_QUEST_3",11)
         end,{},1)
-        -- RunQuest(playerid,"CHAIN_QUEST_3",11)
+        MISSION_TRACKER:SET_UNLOCKED(playerid,"Captain_Wolves_Quest_Begginer");
     end
 })
 

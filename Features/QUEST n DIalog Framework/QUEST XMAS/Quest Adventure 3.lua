@@ -604,7 +604,7 @@ CUTSCENE:CREATE("Swordman_3_Mission",{
         CUTSCENE:DialogSay(1,"Xuyou",p,text,3,0,math.random(-5,5),230);
     end,
     [115] = function(p)
-        local text= "Defeat Minosour 5 Times";
+        local text= "Defeat Minosour 3 Times";
         CUTSCENE:DialogSay(1,"Xuyou",p,text,3,0,math.random(-5,5),230);
     end,
     [205] = function(p)
@@ -663,7 +663,7 @@ HX_Q:CREATE_QUEST(13,{
             HX_Q:SET(p,"Minosour_5",0);
         end 
         local Proggress = tonumber(HX_Q:GET(p,"Minosour_5"));
-        local maks = 5;
+        local maks = 3;
         if Proggress < maks then
             HX_Q:SHOW_QUEST(p, { open=true,text = "Defeat Minosour" , pic = [[3000082]] , detail="( "..Proggress.."/"..maks..") Defeated"});
         else
