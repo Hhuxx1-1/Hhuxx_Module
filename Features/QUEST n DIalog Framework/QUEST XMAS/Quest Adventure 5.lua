@@ -734,7 +734,7 @@ ScriptSupportEvent:registerEvent("Player.DefeatActor",function(e)
     local playerid = e.eventobjid;
     local actorid = e.targetactorid;
     if HX_Q:GET(playerid,"DEFEAT_150_BANDIT_FROM_NOW") ~= "Empty" then 
-        if actorid == bandit then 
+        if actorid == bandit then
             local Proggress = tonumber(HX_Q:GET(playerid,"DEFEAT_150_BANDIT_FROM_NOW"));
             local maks = 150;
             HX_Q:SET(playerid,"DEFEAT_150_BANDIT_FROM_NOW",math.min(Proggress + 1,maks));
@@ -750,6 +750,10 @@ for gift = 96 , 97 do
         end,["END"] = function(p)
             local npc = HX_Q.CURRENT_NPC[p].npc;
             if Actor:killSelf(npc) == 0 then 
+
+                if HX_Q:GET(p,"RECOVERED_GIFT_PROGGRESS") == "Empty" then 
+                    HX_Q:SET(p,"RECOVERED_GIFT_PROGGRESS",0);
+                end 
                 local Proggress = tonumber(HX_Q:GET(p,"RECOVERED_GIFT_PROGGRESS"));
                 local maks = 50;
                 HX_Q:SET(p,"RECOVERED_GIFT_PROGGRESS",math.min(Proggress + 1,maks));
